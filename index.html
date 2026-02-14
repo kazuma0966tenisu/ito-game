@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ito (イト) 風ゲーム</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 { color: #d32f2f; margin-bottom: 10px; }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        .btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        .btn:active { background-color: #b71c1c; }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #d32f2f;
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+        .hidden { display: none; }
+        
+        /* カードスタイル */
+        .card-display {
+            background: linear-gradient(135deg, #ff5252, #b71c1c);
+            color: white;
+            width: 150px;
+            height: 220px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 5px solid white;
+        }
+        
+        .theme-box {
+            background-color: #ffebee;
+            border: 2px dashed #d32f2f;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .theme-title { font-size: 14px; color: #d32f2f; font-weight: bold; }
+        .theme-text { font-size: 20px; font-weight: bold; margin-top: 5px; }
+
+        .input-group { margin: 20px 0; }
+        input[type="number"] {
+            padding: 10px;
+            font-size: 18px;
+            width: 60px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* 結果リスト */
+        .result-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+        .result-item {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-rank { font-weight: bold; color: #d32f2f; margin-right: 10px;}
+        .result-num { 
+            background: #d32f2f; color: white; 
+            padding: 5px 10px; border-radius: 5px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ito (イト) 風ゲーム</h1>
+
+    <div id="screen-setup" class="container">
+        <p>プレイヤー人数を決めてください</p>
+        <div class="input-group">
+            <input type="number" id="player-count" value="3" min="2" max="10"> 人
+        </div>
+        <button class="btn" onclick="startGame()">ゲームスタート</button>
+    </div>
+
+    <div id="screen-check" class="container hidden">
+        <div class="theme-box">
+            <div class="theme-title">今回のお題</div>
+            <div id="current-theme" class="theme-text">---</div>
+        </div>
+        
+        <h2 id="player-turn-text">プレイヤー1 の番です</h2>
+        <p>スマホを受け取ったらボタンを押して<br>自分のナンバーを確認してください。</p>
+        
+        <div id="card-area" class="hidden">
+            <div class="card-display" id="my-number">?</div>
+            <p>この数字をお題に沿って表現してください！<br>覚えたら「隠す」を押して次の人に渡してください。</p>
+        </div>
+
+        <button id="btn-show-card" class="btn" onclick="showCard()">数字を見る</button>
+        <button id="btn-next-player" class="btn hidden" onclick="nextPlayer()">隠して次へ</button>
+    </div>
+
+    <div id="screen-discuss" class="container hidden">
+        <div class="theme-box">
+            <div class="theme-title">お題</div>
+            <div class="theme-text" id="discuss-theme">---</div>
+        </div>
+        <h2>会話タイム！</h2>
+        <p>全員カードを確認しました。</p>
+        <p>自分の数字をテーマに沿った言葉で表現し、<br><strong>小さい順</strong>にカードを出せるよう話し合ってください。</p>
+        <p style="font-size:12px; color:#666;">※直接数字を言うのはNGです！</p>
+        
+        <button class="btn" onclick="showResult()">結果発表（オープン）</button>
+    </div>
+
+    <div id="screen-result" class="container hidden">
+        <h2>結果発表</h2>
+        <p>小さい順に並んでいるか確認しましょう！</p>
+        <ul id="result-list" class="result-list">
+            </ul>
+        <button class="btn" onclick="resetGame()">もう一度遊ぶ</button>
+    </div>
+
+    <script>
+        // お題リスト（自由に編集可能）
+        const themes = [
+            "人気のコンビニ商品", "強い動物", "カバンに入っていたら嬉しいもの",
+            "子供に人気の食べ物", "ゾンビと戦うときに持っていたい武器",
+            "なりたい職業", "住みたい国・場所", "言われて嬉しい言葉",
+            "映画のジャンルの人気", "無人島に持っていきたいもの",
+            "カッコいい仕草", "デートで行きたい場所", "地味に痛いこと"
+        ];
+
+        let players = []; // { id: 1, number: 45 }
+        let currentPlayerIndex = 0;
+        let currentTheme = "";
+
+        // 要素の取得
+        const sSetup = document.getElementById('screen-setup');
+        const sCheck = document.getElementById('screen-check');
+        const sDiscuss = document.getElementById('screen-discuss');
+        const sResult = document.getElementById('screen-result');
+
+        // ゲーム開始処理
+        function startGame() {
+            const count = parseInt(document.getElementById('player-count').value);
+            if(count < 2 || count > 10) { alert("人数は2〜10人で設定してください"); return; }
+
+            // 1〜100の配列を作成してシャッフル
+            let deck = [];
+            for(let i=1; i<=100; i++) deck.push(i);
+            deck = shuffle(deck);
+
+            // プレイヤーに配布
+            players = [];
+            for(let i=0; i<count; i++) {
+                players.push({ id: i+1, number: deck[i] });
+            }
+
+            // お題を決定
+            currentTheme = themes[Math.floor(Math.random() * themes.length)];
+            document.getElementById('current-theme').innerText = currentTheme;
+            document.getElementById('discuss-theme').innerText = currentTheme;
+
+            // 状態リセット
+            currentPlayerIndex = 0;
+            updateCheckScreen();
+
+            // 画面切り替え
+            switchScreen(sCheck);
+        }
+
+        // プレイヤー確認画面の更新
+        function updateCheckScreen() {
+            document.getElementById('player-turn-text').innerText = `プレイヤー ${players[currentPlayerIndex].id} の番です`;
+            document.getElementById('card-area').classList.add('hidden');
+            document.getElementById('btn-show-card').classList.remove('hidden');
+            document.getElementById('btn-next-player').classList.add('hidden');
+        }
+
+        // 数字を表示する
+        function showCard() {
+            const myNum = players[currentPlayerIndex].number;
+            document.getElementById('my-number').innerText = myNum;
+            
+            document.getElementById('card-area').classList.remove('hidden');
+            document.getElementById('btn-show-card').classList.add('hidden');
+            document.getElementById('btn-next-player').classList.remove('hidden');
+        }
+
+        // 次のプレイヤーへ、または会話フェーズへ
+        function nextPlayer() {
+            currentPlayerIndex++;
+            if(currentPlayerIndex < players.length) {
+                // 次の人がいる場合
+                updateCheckScreen();
+            } else {
+                // 全員見終わった場合
+                switchScreen(sDiscuss);
+            }
+        }
+
+        // 結果発表
+        function showResult() {
+            const list = document.getElementById('result-list');
+            list.innerHTML = "";
+            
+            // 数字の小さい順にソートして表示
+            const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
+
+            sortedPlayers.forEach((p, index) => {
+                const li = document.createElement('li');
+                li.className = 'result-item';
+                li.innerHTML = `
+                    <span>
+                        <span class="result-rank">${index + 1}番目</span>
+                        プレイヤー ${p.id}
+                    </span>
+                    <span class="result-num">${p.number}</span>
+                `;
+                list.appendChild(li);
+            });
+
+            switchScreen(sResult);
+        }
+
+        // ゲームリセット
+        function resetGame() {
+            switchScreen(sSetup);
+        }
+
+        // 画面切り替え用ユーティリティ
+        function switchScreen(targetScreen) {
+            [sSetup, sCheck, sDiscuss, sResult].forEach(s => s.classList.add('hidden'));
+            targetScreen.classList.remove('hidden');
+        }
+
+        // フィッシャー–イェーツのシャッフル
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
