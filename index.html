@@ -3,21 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>itoっぽいの</title>
+    <title>診断モード - itoっぽい</title>
     <style>
+        /* 診断用ログ表示エリア */
+        #debug-console {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            overflow-y: scroll;
+            z-index: 9999;
+            border-bottom: 2px solid #d32f2f;
+            text-align: left;
+        }
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
             background-color: #f0f2f5;
             color: #333;
             text-align: center;
             padding: 20px;
-            margin: 0;
+            margin-top: 160px; /* 診断ボックスの分空ける */
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
-        h1 { color: #d32f2f; margin-bottom: 10px; }
         .container {
             background: white;
             padding: 20px;
@@ -37,520 +53,103 @@
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
-            transition: background 0.2s;
         }
-        .btn:active { background-color: #b71c1c; }
-        
-        /* 補助ボタン */
-        .btn-outline {
-            background-color: white;
-            border: 2px solid #d32f2f;
-            color: #d32f2f;
-            margin-top: 10px;
-            padding: 8px 15px;
-            font-size: 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-gray {
-            background-color: #888;
-            border: none;
-            color: white;
-            border-radius: 20px;
-            padding: 8px 15px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        
-        .action-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
         .hidden { display: none !important; }
-        
-        /* カードスタイル */
-        .card-display {
-            background: linear-gradient(135deg, #ff5252, #b71c1c);
-            color: white;
-            width: 150px;
-            height: 220px;
-            margin: 20px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            font-weight: bold;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            border: 5px solid white;
-        }
-        
-        /* お題ボックス */
-        .theme-box {
-            background-color: #ffebee;
-            border: 2px dashed #d32f2f;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 10px;
-        }
-        .theme-title { font-size: 14px; color: #d32f2f; font-weight: bold; }
-        .theme-text { font-size: 22px; font-weight: bold; margin-top: 5px; word-break: break-all; }
-        .theme-example {
-            font-size: 14px;
-            color: #555;
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            background: rgba(255,255,255,0.7);
-            padding: 8px;
-            border-radius: 5px;
-        }
-        .ex-item { text-align: center; flex: 1; }
-        .ex-val { font-weight: bold; color: #d32f2f; display: block; font-size: 12px; }
-
-        /* 入力エリア */
-        .input-group { margin: 15px 0; text-align: left; }
-        .input-group label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px;}
-        input[type="number"], input[type="text"], select {
-            padding: 10px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            background-color: #fff;
-        }
-        
-        /* 名前入力リスト */
-        #name-inputs-container {
-            margin-bottom: 15px;
-            border: 1px solid #eee;
-            padding: 10px;
-            border-radius: 5px;
-            background: #fafafa;
-        }
-        .name-row { margin-bottom: 8px; }
-
-        /* モード選択 */
-        .mode-select {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .mode-label {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            font-size: 14px;
-            background: #fff;
-        }
-        input[type="radio"]:checked + .mode-label {
-            background-color: #ffebee;
-            border-color: #d32f2f;
-            color: #d32f2f;
-            font-weight: bold;
-        }
-        input[type="radio"] { display: none; }
-
-        /* サブフォーム */
-        .sub-form {
-            background: #fff;
-            border: 2px solid #d32f2f;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            text-align: left;
-        }
-        .sub-header {
-            font-weight: bold; color: #d32f2f; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;
-        }
-
-        /* テーマ管理リスト */
-        .manage-list {
-            max-height: 250px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            border: 1px solid #eee;
-            border-radius: 5px;
-        }
-        .manage-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            background: #fff;
-        }
-        .manage-check { margin-right: 10px; transform: scale(1.3); }
-        .manage-title { flex: 1; font-size: 14px; margin-right: 10px;}
-        .btn-delete {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 5px;
-            font-size: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* 結果リスト */
-        .result-list {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-        }
-        .result-item {
-            background: #fff;
-            border-bottom: 1px solid #eee;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .result-rank { font-weight: bold; color: #d32f2f; margin-right: 10px;}
-        .result-num { 
-            background: #d32f2f; color: white; 
-            padding: 5px 10px; border-radius: 5px; font-weight: bold;
-        }
     </style>
 </head>
 <body>
 
-    <h1>itoっぽいの</h1>
+    <div id="debug-console">診断ログ待機中...<br></div>
 
     <div id="screen-setup" class="container">
+        <h2>設定画面 (診断中)</h2>
+        <p>プレイヤー人数</p>
+        <input type="number" id="player-count" value="3" style="font-size:16px; padding:10px;">
         
-        <div class="input-group">
-            <label>プレイヤー人数</label>
-            <input type="number" id="player-count" value="3" min="2" max="10">
-        </div>
-
-        <div class="input-group">
-            <label>プレイヤー名設定 (任意)</label>
-            <div id="name-inputs-container">
-                </div>
-        </div>
-
-        <div class="input-group">
-            <label>お題の決め方</label>
-            <div class="mode-select">
-                <label>
-                    <input type="radio" name="themeMode" value="random" checked onclick="toggleThemeSelect()">
-                    <span class="mode-label">ランダム</span>
-                </label>
-                <label>
-                    <input type="radio" name="themeMode" value="select" onclick="toggleThemeSelect()">
-                    <span class="mode-label">リストから選択</span>
-                </label>
-            </div>
-            
-            <div id="theme-selector-area" class="hidden">
-                <select id="theme-select"></select>
+        <div id="name-inputs-container" style="margin:10px 0; background:#eee; padding:10px;">
             </div>
 
-            <div class="action-buttons">
-                <button class="btn-outline" style="border-color:#555; color:#555;" onclick="toggleManageForm()">⚙ テーマを削除・管理</button>
-                <button class="btn-outline" onclick="toggleAddForm()">＋ テーマを新しく追加</button>
-            </div>
-
-            <div id="add-theme-area" class="sub-form hidden">
-                <div class="sub-header">新しいテーマを追加</div>
-                
-                <label>テーマ名</label>
-                <input type="text" id="new-theme-title" placeholder="例：おふくろの味">
-                
-                <label>1 (最小) の例</label>
-                <input type="text" id="new-theme-min" placeholder="例：ただのゆで卵">
-                
-                <label>100 (最大) の例</label>
-                <input type="text" id="new-theme-max" placeholder="例：特製肉じゃが">
-
-                <div style="display:flex; gap:10px; justify-content: flex-end; margin-top:10px;">
-                    <button class="btn-gray" onclick="toggleAddForm()">キャンセル</button>
-                    <button class="btn-gray" style="background-color:#d32f2f;" onclick="saveNewTheme()">追加する</button>
-                </div>
-            </div>
-
-            <div id="manage-theme-area" class="sub-form hidden">
-                <div class="sub-header">テーマ管理</div>
-                <p style="font-size:12px; margin:0 0 10px 0; color:#666;">
-                    チェックを外すとゲームに出ません。<br>
-                    「削除」を押すと完全に消えます。
-                </p>
-                <div id="manage-list-container" class="manage-list">
-                    </div>
-                <div style="text-align: right; display:flex; justify-content:space-between; margin-top:10px;">
-                    <button class="btn-gray" style="font-size:10px;" onclick="forceReset()">強制リセット</button>
-                    <button class="btn-gray" onclick="toggleManageForm()">閉じる</button>
-                </div>
-            </div>
-        </div>
-
-        <button class="btn" onclick="startGame()">ゲームスタート</button>
+        <button class="btn" onclick="tryStart()">ゲームスタート (診断)</button>
     </div>
 
     <div id="screen-check" class="container hidden">
-        <div class="theme-box">
-            <div class="theme-title">今回のお題</div>
-            <div id="current-theme" class="theme-text">---</div>
-            <div id="theme-scale" class="theme-example hidden">
-                <div class="ex-item"><span class="ex-val">1</span><span id="scale-min">---</span></div>
-                <div style="align-self:center;">↔</div>
-                <div class="ex-item"><span class="ex-val">100</span><span id="scale-max">---</span></div>
-            </div>
-        </div>
-        
-        <h2 id="player-turn-text">〇〇さんの番です</h2>
-        <p>スマホを受け取ったらボタンを押して<br>自分のナンバーを確認してください。</p>
-        
-        <div id="card-area" class="hidden">
-            <div class="card-display" id="my-number">?</div>
-            <p>この数字をお題に沿って表現してください！<br>覚えたら「隠す」を押して次の人に渡してください。</p>
-        </div>
-
-        <button id="btn-show-card" class="btn" onclick="showCard()">数字を見る</button>
-        <button id="btn-next-player" class="btn hidden" onclick="nextPlayer()">隠して次へ</button>
-    </div>
-
-    <div id="screen-discuss" class="container hidden">
-        <div class="theme-box">
-            <div class="theme-title">お題</div>
-            <div class="theme-text" id="discuss-theme">---</div>
-            <div class="theme-example" id="discuss-scale">
-                <div class="ex-item"><span class="ex-val">1</span><span id="discuss-min">---</span></div>
-                <div style="align-self:center;">↔</div>
-                <div class="ex-item"><span class="ex-val">100</span><span id="discuss-max">---</span></div>
-            </div>
-        </div>
-        <h2>会話タイム！</h2>
-        <p>全員カードを確認しました。</p>
-        <p>自分の数字をテーマに沿った言葉で表現し、<br><strong>小さい順</strong>にカードを出せるよう話し合ってください。</p>
-        <p style="font-size:12px; color:#666;">※直接数字を言うのはNGです！</p>
-        
-        <button class="btn" onclick="showResult()">結果発表（オープン）</button>
-    </div>
-
-    <div id="screen-result" class="container hidden">
-        <h2>結果発表</h2>
-        <p>小さい順に並んでいるか確認しましょう！</p>
-        <ul id="result-list" class="result-list">
-            </ul>
-        <button class="btn" onclick="resetGame()">もう一度遊ぶ</button>
+        <h2 id="player-turn-text">確認画面</h2>
+        <div id="my-number" style="font-size:50px; color:red; font-weight:bold;">?</div>
+        <button class="btn" onclick="nextStep()">次へ</button>
     </div>
 
     <script>
-        // ★重要：保存キーを新しくしました (v6)
-        const STORAGE_KEY = 'ito_data_v6_new';
+        // --- 診断用ロガー ---
+        function log(msg) {
+            const box = document.getElementById('debug-console');
+            const time = new Date().toLocaleTimeString();
+            box.innerHTML += `[${time}] ${msg}<br>`;
+            box.scrollTop = box.scrollHeight;
+        }
 
-        // デフォルトのお題リスト
-        const defaultThemesRaw = [
-            { title: "生き物の強さ", min: "アリ", max: "ライオン" },
-            { title: "コンビニ商品の人気", min: "水", max: "からあげクン" },
-            { title: "ゾンビと戦う時の武器", min: "素手", max: "戦車" },
-            { title: "子供に人気な給食のメニュー", min: "脱脂粉乳", max: "揚げパン" },
-            { title: "怖いもの", min: "あくび", max: "死・お化け" },
-            { title: "おにぎりの具の人気", min: "塩なし白米", max: "いくら" },
-            { title: "欲しい超能力・特殊能力", min: "爪が早く伸びる", max: "空を飛ぶ" },
-            { title: "カバンに入っていたら嬉しいもの", min: "ゴミ", max: "現金100万円" },
-            { title: "強そうな言葉・響き", min: "ぷよぷよ", max: "撃滅" },
-            { title: "なりたい職業", min: "ブラック企業の平社員", max: "YouTuber" },
-            { title: "無人島に持っていきたいもの", min: "砂", max: "ナイフ" },
-            { title: "恋人に求める条件", min: "呼吸をしている", max: "大富豪で優しい美形" },
-            { title: "1億円もらったらやりたいこと", min: "貯金", max: "世界一周" },
-            { title: "やめられない・とまらないこと", min: "勉強", max: "スマホを見る" },
-            { title: "言われて嬉しい褒め言葉", min: "人間だね", max: "天才" },
-            { title: "人生で大切なもの", min: "プライド", max: "家族" },
-            { title: "もらって嬉しいプレゼント", min: "石ころ", max: "最新家電" },
-            { title: "初デートで行きたい場所", min: "実家", max: "夜景の見えるレストラン" },
-            { title: "地味に痛いこと", min: "ささくれ", max: "骨折" },
-            { title: "「この人、仕事できるな」と思う瞬間", min: "挨拶ができる", max: "トラブル即解決" },
-            { title: "映画のジャンルの人気", min: "不人気", max: "大ヒット" },
-            { title: "カッコいい仕草", min: "ダサい", max: "超クール" },
-            { title: "住みたい国・場所", min: "絶対住みたくない", max: "今すぐ移住したい" }
-        ];
+        // エラーをキャッチする設定
+        window.onerror = function(msg, url, line) {
+            log(`❌ エラー発生!: ${msg} (Line: ${line})`);
+            return false;
+        };
 
-        let allThemes = [];
-        let players = []; 
-        let currentPlayerIndex = 0;
-        let currentThemeObj = null;
+        // --- ゲーム処理 ---
+        let players = [];
+        let index = 0;
 
-        // 初期化処理（エラーガード付き）
         window.onload = function() {
+            log("✅ ページ読み込み完了");
             try {
-                // プレイヤー人数イベント設定
-                const countInput = document.getElementById('player-count');
-                if(!countInput) throw new Error("画面の読み込みに失敗しました");
-
-                countInput.addEventListener('input', generateNameInputs);
-                generateNameInputs(); // 初回実行
-                
-                loadAllThemes(); // テーマ読み込み
-                
-                console.log("初期化完了");
-            } catch (e) {
-                alert("エラーが発生しました。一度ブラウザを閉じて開き直すか、「強制リセット」を試してください。\n" + e);
+                const input = document.getElementById('player-count');
+                if(input) {
+                    log("OK: 人数入力欄が見つかりました");
+                    input.addEventListener('input', generateInputs);
+                    generateInputs();
+                } else {
+                    log("❌ ERROR: 人数入力欄が見つかりません");
+                }
+            } catch(e) {
+                log("❌ 初期化エラー: " + e.message);
             }
         };
 
-        // 名前入力欄の生成
-        function generateNameInputs() {
-            const countInput = document.getElementById('player-count');
-            let count = parseInt(countInput.value);
-            if (isNaN(count) || count < 0) count = 3;
-
-            const container = document.getElementById('name-inputs-container');
-            if(!container) return;
-            container.innerHTML = ""; 
-
+        function generateInputs() {
+            log("処理: 名前入力欄を生成します");
+            const count = document.getElementById('player-count').value;
+            const area = document.getElementById('name-inputs-container');
+            area.innerHTML = "";
             for(let i=1; i<=count; i++) {
-                const div = document.createElement('div');
-                div.className = "name-row";
-                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
-                container.appendChild(div);
+                area.innerHTML += `<div style='margin:5px;'>プレイヤー${i}</div>`;
             }
         }
 
-        // テーマの読み込み
-        function loadAllThemes() {
+        // グローバル関数として定義
+        window.tryStart = function() {
+            log("ボタン: 「ゲームスタート」が押されました");
             try {
-                // 新しいキーから読み込む
-                const stored = localStorage.getItem(STORAGE_KEY);
+                const count = document.getElementById('player-count').value;
+                log(`設定人数: ${count}人`);
                 
-                if (stored) {
-                    allThemes = JSON.parse(stored);
-                } else {
-                    // データがない場合はデフォルトを使用
-                    allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
-                    saveThemesToStorage();
-                }
-                updateThemeSelect();
-            } catch (e) {
-                // 読み込み失敗時はデフォルトで動かす
-                console.error("Save data error", e);
-                allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
-                updateThemeSelect();
-            }
-        }
-
-        function saveThemesToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(allThemes));
-                updateThemeSelect();
+                // 画面切り替えテスト
+                document.getElementById('screen-setup').classList.add('hidden');
+                document.getElementById('screen-check').classList.remove('hidden');
+                
+                // カード配布テスト
+                const num = Math.floor(Math.random() * 100) + 1;
+                document.getElementById('my-number').innerText = num;
+                document.getElementById('player-turn-text').innerText = "プレイヤー1の番";
+                
+                log("成功: 画面が切り替わりました");
             } catch(e) {
-                alert("保存できませんでした（スマホの容量不足などの可能性があります）");
+                log("❌ スタート処理エラー: " + e.message);
             }
-        }
+        };
 
-        // 強制リセット機能
-        function forceReset() {
-            if(confirm("【トラブル解決用】\nすべてのデータを消して初期状態に戻します。よろしいですか？")) {
-                localStorage.removeItem(STORAGE_KEY);
-                alert("リセットしました。ページを再読み込みします。");
-                location.reload(); 
-            }
-        }
-
-        // セレクトボックスの更新
-        function updateThemeSelect() {
-            const select = document.getElementById('theme-select');
-            if(!select) return;
-            select.innerHTML = ""; 
-            
-            const activeThemes = allThemes.filter(t => t.active);
-            
-            if(activeThemes.length === 0) {
-                const opt = document.createElement('option');
-                opt.text = "（有効なお題がありません）";
-                select.appendChild(opt);
-                return;
-            }
-
-            activeThemes.forEach((t) => {
-                const option = document.createElement('option');
-                option.value = t.title;
-                option.text = t.title; 
-                select.appendChild(option);
-            });
-        }
-
-        function toggleAddForm() {
-            document.getElementById('add-theme-area').classList.toggle('hidden');
-            document.getElementById('manage-theme-area').classList.add('hidden');
-        }
-
-        function toggleManageForm() {
-            const area = document.getElementById('manage-theme-area');
-            document.getElementById('add-theme-area').classList.add('hidden');
-            area.classList.toggle('hidden');
-            
-            if(!area.classList.contains('hidden')) {
-                renderManageList(); 
-            }
-        }
-
-        function renderManageList() {
-            const container = document.getElementById('manage-list-container');
-            container.innerHTML = "";
-
-            if(allThemes.length === 0) {
-                container.innerHTML = "<div style='padding:10px;'>テーマがありません</div>";
-                return;
-            }
-
-            allThemes.forEach((t, index) => {
-                const row = document.createElement('div');
-                row.className = "manage-item";
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = "checkbox";
-                checkbox.className = "manage-check";
-                checkbox.checked = t.active;
-                checkbox.onchange = function() {
-                    allThemes[index].active = checkbox.checked;
-                    saveThemesToStorage();
-                };
-
-                const titleSpan = document.createElement('span');
-                titleSpan.className = "manage-title";
-                titleSpan.innerText = t.title;
-                if(!t.active) titleSpan.style.color = "#aaa"; 
-
-                const delBtn = document.createElement('button');
-                delBtn.innerText = "削除";
-                delBtn.className = "btn-delete";
-                delBtn.onclick = function() {
-                    if(confirm(`「${t.title}」を削除しますか？`)) {
-                        allThemes.splice(index, 1);
-                        saveThemesToStorage();
-                        renderManageList();
-                    }
-                };
-
-                row.appendChild(checkbox);
-                row.appendChild(titleSpan);
-                row.appendChild(delBtn);
-                container.appendChild(row);
-            });
-        }
-
-        function saveNewTheme() {
-            const title = document.getElementById('new-theme-title').value.trim();
-            const min = document.getElementById('new-theme-min').value.trim();
-            const max = document.getElementById('new-theme-max').value.trim();
-
-            if(!title || !min || !max) {
-                alert("すべての項目を入力してください");
-                return;
-            }
-
-            const newTheme = { title: title, min: min, max: max, active: true };
-            allT
+        window.nextStep = function() {
+            log("ボタン: 「次へ」が押されました");
+            alert("ボタンは正常に反応しています！");
+            location.reload();
+        };
+    </script>
+</body>
+</html>
