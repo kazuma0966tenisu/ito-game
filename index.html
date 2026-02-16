@@ -289,7 +289,7 @@
                 <div id="manage-list-container" class="manage-list">
                     </div>
                 <div style="text-align: right; display:flex; justify-content:space-between; margin-top:10px;">
-                    <button class="btn-gray" style="font-size:10px;" onclick="resetAllData()">全データ初期化</button>
+                    <button class="btn-gray" style="font-size:10px;" onclick="forceReset()">強制リセット</button>
                     <button class="btn-gray" onclick="toggleManageForm()">閉じる</button>
                 </div>
             </div>
@@ -348,6 +348,9 @@
     </div>
 
     <script>
+        // ★重要：保存キーを新しくしました (v6)
+        const STORAGE_KEY = 'ito_data_v6_new';
+
         // デフォルトのお題リスト
         const defaultThemesRaw = [
             { title: "生き物の強さ", min: "アリ", max: "ライオン" },
@@ -380,23 +383,21 @@
         let currentPlayerIndex = 0;
         let currentThemeObj = null;
 
-        // 初期化処理
+        // 初期化処理（エラーガード付き）
         window.onload = function() {
             try {
+                // プレイヤー人数イベント設定
                 const countInput = document.getElementById('player-count');
-                if(countInput) {
-                    countInput.addEventListener('input', generateNameInputs);
-                    generateNameInputs(); // 名前入力欄を生成
-                    loadAllThemes();      // テーマを読み込み
-                    
-                    // 成功メッセージ（JSが動いているか確認用）
-                    alert("準備OK！");
-                } else {
-                    alert("エラー：画面の読み込みに失敗しました。");
-                }
+                if(!countInput) throw new Error("画面の読み込みに失敗しました");
+
+                countInput.addEventListener('input', generateNameInputs);
+                generateNameInputs(); // 初回実行
+                
+                loadAllThemes(); // テーマ読み込み
+                
+                console.log("初期化完了");
             } catch (e) {
-                console.error("Init Error:", e);
-                alert("初期化エラーが発生しました：" + e);
+                alert("エラーが発生しました。一度ブラウザを閉じて開き直すか、「強制リセット」を試してください。\n" + e);
             }
         };
 
@@ -407,6 +408,7 @@
             if (isNaN(count) || count < 0) count = 3;
 
             const container = document.getElementById('name-inputs-container');
+            if(!container) return;
             container.innerHTML = ""; 
 
             for(let i=1; i<=count; i++) {
@@ -417,51 +419,50 @@
             }
         }
 
-        // テーマの読み込み（データ修復機能付き）
+        // テーマの読み込み
         function loadAllThemes() {
             try {
-                // v5.0用のデータを取得
-                const storedV4 = localStorage.getItem('itoThemesV4');
+                // 新しいキーから読み込む
+                const stored = localStorage.getItem(STORAGE_KEY);
                 
-                if (storedV4) {
-                    allThemes = JSON.parse(storedV4);
+                if (stored) {
+                    allThemes = JSON.parse(stored);
                 } else {
                     // データがない場合はデフォルトを使用
                     allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
-                    // 旧データを救済
-                    const oldCustom = localStorage.getItem('myCustomThemes');
-                    if(oldCustom) {
-                        try {
-                            const oldParsed = JSON.parse(oldCustom);
-                            if(Array.isArray(oldParsed)) {
-                                const convertedOld = oldParsed.map(t => ({ ...t, active: true }));
-                                allThemes = allThemes.concat(convertedOld);
-                            }
-                        } catch(e) {}
-                    }
                     saveThemesToStorage();
                 }
                 updateThemeSelect();
             } catch (e) {
+                // 読み込み失敗時はデフォルトで動かす
+                console.error("Save data error", e);
                 allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
                 updateThemeSelect();
             }
         }
 
         function saveThemesToStorage() {
-            localStorage.setItem('itoThemesV4', JSON.stringify(allThemes));
-            updateThemeSelect();
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allThemes));
+                updateThemeSelect();
+            } catch(e) {
+                alert("保存できませんでした（スマホの容量不足などの可能性があります）");
+            }
         }
 
-        function resetAllData() {
-            if(confirm("全てのデータを初期化して元に戻しますか？")) {
-                localStorage.removeItem('itoThemesV4');
+        // 強制リセット機能
+        function forceReset() {
+            if(confirm("【トラブル解決用】\nすべてのデータを消して初期状態に戻します。よろしいですか？")) {
+                localStorage.removeItem(STORAGE_KEY);
+                alert("リセットしました。ページを再読み込みします。");
                 location.reload(); 
             }
         }
 
+        // セレクトボックスの更新
         function updateThemeSelect() {
             const select = document.getElementById('theme-select');
+            if(!select) return;
             select.innerHTML = ""; 
             
             const activeThemes = allThemes.filter(t => t.active);
@@ -482,19 +483,16 @@
         }
 
         function toggleAddForm() {
-            const addArea = document.getElementById('add-theme-area');
-            const manageArea = document.getElementById('manage-theme-area');
-            manageArea.classList.add('hidden');
-            addArea.classList.toggle('hidden');
+            document.getElementById('add-theme-area').classList.toggle('hidden');
+            document.getElementById('manage-theme-area').classList.add('hidden');
         }
 
         function toggleManageForm() {
-            const addArea = document.getElementById('add-theme-area');
-            const manageArea = document.getElementById('manage-theme-area');
-            addArea.classList.add('hidden');
-            manageArea.classList.toggle('hidden');
+            const area = document.getElementById('manage-theme-area');
+            document.getElementById('add-theme-area').classList.add('hidden');
+            area.classList.toggle('hidden');
             
-            if(!manageArea.classList.contains('hidden')) {
+            if(!area.classList.contains('hidden')) {
                 renderManageList(); 
             }
         }
@@ -519,7 +517,6 @@
                 checkbox.onchange = function() {
                     allThemes[index].active = checkbox.checked;
                     saveThemesToStorage();
-                    updateThemeSelect(); 
                 };
 
                 const titleSpan = document.createElement('span');
@@ -531,11 +528,10 @@
                 delBtn.innerText = "削除";
                 delBtn.className = "btn-delete";
                 delBtn.onclick = function() {
-                    if(confirm(`「${t.title}」を完全に削除しますか？`)) {
+                    if(confirm(`「${t.title}」を削除しますか？`)) {
                         allThemes.splice(index, 1);
                         saveThemesToStorage();
                         renderManageList();
-                        updateThemeSelect();
                     }
                 };
 
@@ -547,4 +543,14 @@
         }
 
         function saveNewTheme() {
-            const title = do
+            const title = document.getElementById('new-theme-title').value.trim();
+            const min = document.getElementById('new-theme-min').value.trim();
+            const max = document.getElementById('new-theme-max').value.trim();
+
+            if(!title || !min || !max) {
+                alert("すべての項目を入力してください");
+                return;
+            }
+
+            const newTheme = { title: title, min: min, max: max, active: true };
+            allT
