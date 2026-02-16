@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ito (イト) 風ゲーム</title>
+    <title>itoっぽいの</title>
     <style>
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
@@ -23,7 +23,7 @@
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
         }
         .btn {
@@ -39,12 +39,6 @@
             transition: background 0.2s;
         }
         .btn:active { background-color: #b71c1c; }
-        .btn-outline {
-            background-color: transparent;
-            border: 2px solid #d32f2f;
-            color: #d32f2f;
-            margin-top: 10px;
-        }
         .hidden { display: none; }
         
         /* カードスタイル */
@@ -64,6 +58,7 @@
             border: 5px solid white;
         }
         
+        /* お題ボックス */
         .theme-box {
             background-color: #ffebee;
             border: 2px dashed #d32f2f;
@@ -73,16 +68,65 @@
         }
         .theme-title { font-size: 14px; color: #d32f2f; font-weight: bold; }
         .theme-text { font-size: 20px; font-weight: bold; margin-top: 5px; }
-
-        .input-group { margin: 20px 0; }
-        input[type="number"] {
-            padding: 10px;
-            font-size: 18px;
-            width: 60px;
-            text-align: center;
-            border: 1px solid #ccc;
+        .theme-example {
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.7);
+            padding: 8px;
             border-radius: 5px;
         }
+        .ex-item { text-align: center; flex: 1; }
+        .ex-val { font-weight: bold; color: #d32f2f; display: block; font-size: 12px; }
+
+        /* 入力エリア */
+        .input-group { margin: 15px 0; text-align: left; }
+        .input-group label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input[type="number"], input[type="text"], select {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        /* 名前入力リスト */
+        #name-inputs-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .name-row { margin-bottom: 8px; }
+
+        /* モード選択 */
+        .mode-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-label {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+        input[type="radio"]:checked + .mode-label {
+            background-color: #ffebee;
+            border-color: #d32f2f;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        input[type="radio"] { display: none; }
 
         /* 結果リスト */
         .result-list {
@@ -107,13 +151,39 @@
 </head>
 <body>
 
-    <h1>ito (イト) 風ゲーム</h1>
+    <h1>itoっぽいの</h1>
 
     <div id="screen-setup" class="container">
-        <p>プレイヤー人数を決めてください</p>
+        
         <div class="input-group">
-            <input type="number" id="player-count" value="3" min="2" max="10"> 人
+            <label>プレイヤー人数</label>
+            <input type="number" id="player-count" value="3" min="2" max="10" onchange="generateNameInputs()">
         </div>
+
+        <div class="input-group">
+            <label>プレイヤー名設定 (任意)</label>
+            <div id="name-inputs-container">
+                </div>
+        </div>
+
+        <div class="input-group">
+            <label>お題の決め方</label>
+            <div class="mode-select">
+                <label>
+                    <input type="radio" name="themeMode" value="random" checked onclick="toggleThemeSelect()">
+                    <span class="mode-label">ランダム</span>
+                </label>
+                <label>
+                    <input type="radio" name="themeMode" value="select" onclick="toggleThemeSelect()">
+                    <span class="mode-label">リストから選択</span>
+                </label>
+            </div>
+            
+            <div id="theme-selector-area" class="hidden">
+                <select id="theme-select"></select>
+            </div>
+        </div>
+
         <button class="btn" onclick="startGame()">ゲームスタート</button>
     </div>
 
@@ -121,9 +191,14 @@
         <div class="theme-box">
             <div class="theme-title">今回のお題</div>
             <div id="current-theme" class="theme-text">---</div>
+            <div id="theme-scale" class="theme-example hidden">
+                <div class="ex-item"><span class="ex-val">1</span><span id="scale-min">---</span></div>
+                <div style="align-self:center;">↔</div>
+                <div class="ex-item"><span class="ex-val">100</span><span id="scale-max">---</span></div>
+            </div>
         </div>
         
-        <h2 id="player-turn-text">プレイヤー1 の番です</h2>
+        <h2 id="player-turn-text">〇〇さんの番です</h2>
         <p>スマホを受け取ったらボタンを押して<br>自分のナンバーを確認してください。</p>
         
         <div id="card-area" class="hidden">
@@ -139,6 +214,11 @@
         <div class="theme-box">
             <div class="theme-title">お題</div>
             <div class="theme-text" id="discuss-theme">---</div>
+            <div class="theme-example" id="discuss-scale">
+                <div class="ex-item"><span class="ex-val">1</span><span id="discuss-min">---</span></div>
+                <div style="align-self:center;">↔</div>
+                <div class="ex-item"><span class="ex-val">100</span><span id="discuss-max">---</span></div>
+            </div>
         </div>
         <h2>会話タイム！</h2>
         <p>全員カードを確認しました。</p>
@@ -157,18 +237,38 @@
     </div>
 
     <script>
-        // お題リスト（自由に編集可能）
-        const themes = [
-            "人気のコンビニ商品", "強い動物", "カバンに入っていたら嬉しいもの",
-            "子供に人気の食べ物", "ゾンビと戦うときに持っていたい武器",
-            "なりたい職業", "住みたい国・場所", "言われて嬉しい言葉",
-            "映画のジャンルの人気", "無人島に持っていきたいもの",
-            "カッコいい仕草", "デートで行きたい場所", "地味に痛いこと"
+        // お題リスト（オブジェクト形式に変更）
+        // 1と100の例があるものは min, max に設定
+        const themesData = [
+            { title: "生き物の強さ", min: "アリ", max: "ライオン" },
+            { title: "コンビニ商品の人気", min: "水", max: "からあげクン" },
+            { title: "ゾンビと戦う時の武器", min: "素手", max: "戦車" },
+            { title: "子供に人気な給食のメニュー", min: "脱脂粉乳", max: "揚げパン" },
+            { title: "怖いもの", min: "あくび", max: "死・お化け" },
+            { title: "おにぎりの具の人気", min: "塩なし白米", max: "いくら" },
+            { title: "欲しい超能力・特殊能力", min: "爪が早く伸びる", max: "空を飛ぶ" },
+            { title: "カバンに入っていたら嬉しいもの", min: "ゴミ", max: "現金100万円" },
+            { title: "強そうな言葉・響き", min: "ぷよぷよ", max: "撃滅" },
+            { title: "なりたい職業", min: "ブラック企業の平社員", max: "YouTuber" },
+            { title: "無人島に持っていきたいもの", min: "砂", max: "ナイフ" },
+            { title: "恋人に求める条件", min: "呼吸をしている", max: "大富豪で優しい美形" },
+            { title: "1億円もらったらやりたいこと", min: "貯金", max: "世界一周" },
+            { title: "やめられない・とまらないこと", min: "勉強", max: "スマホを見る" },
+            { title: "言われて嬉しい褒め言葉", min: "人間だね", max: "天才" },
+            { title: "人生で大切なもの", min: "プライド", max: "家族" },
+            { title: "もらって嬉しいプレゼント", min: "石ころ", max: "最新家電" },
+            { title: "初デートで行きたい場所", min: "実家", max: "夜景の見えるレストラン" },
+            { title: "地味に痛いこと", min: "ささくれ", max: "骨折" },
+            { title: "「この人、仕事できるな」と思う瞬間", min: "挨拶ができる", max: "トラブル即解決" },
+            // 旧リストの一部も形式を合わせて維持
+            { title: "映画のジャンルの人気", min: "不人気", max: "大ヒット" },
+            { title: "カッコいい仕草", min: "ダサい", max: "超クール" },
+            { title: "住みたい国・場所", min: "絶対住みたくない", max: "今すぐ移住したい" }
         ];
 
-        let players = []; // { id: 1, number: 45 }
+        let players = []; // { name: "Aさん", number: 45 }
         let currentPlayerIndex = 0;
-        let currentTheme = "";
+        let currentThemeObj = null;
 
         // 要素の取得
         const sSetup = document.getElementById('screen-setup');
@@ -176,26 +276,80 @@
         const sDiscuss = document.getElementById('screen-discuss');
         const sResult = document.getElementById('screen-result');
 
+        // 初期化処理
+        window.onload = function() {
+            generateNameInputs(); // 名前入力欄の生成
+            initThemeSelect();    // テーマ選択肢の生成
+        };
+
+        // 名前入力欄を動的に生成
+        function generateNameInputs() {
+            const count = document.getElementById('player-count').value;
+            const container = document.getElementById('name-inputs-container');
+            container.innerHTML = ""; // クリア
+
+            for(let i=1; i<=count; i++) {
+                const div = document.createElement('div');
+                div.className = "name-row";
+                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
+                container.appendChild(div);
+            }
+        }
+
+        // テーマ選択肢を生成
+        function initThemeSelect() {
+            const select = document.getElementById('theme-select');
+            themesData.forEach((t, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                // セレクトボックス内では例も少し見せる
+                option.text = `${t.title} (${t.min}⇔${t.max})`;
+                select.appendChild(option);
+            });
+        }
+
+        // モード切り替え時の表示制御
+        function toggleThemeSelect() {
+            const mode = document.querySelector('input[name="themeMode"]:checked').value;
+            const selectorArea = document.getElementById('theme-selector-area');
+            if(mode === 'select') {
+                selectorArea.classList.remove('hidden');
+            } else {
+                selectorArea.classList.add('hidden');
+            }
+        }
+
         // ゲーム開始処理
         function startGame() {
             const count = parseInt(document.getElementById('player-count').value);
             if(count < 2 || count > 10) { alert("人数は2〜10人で設定してください"); return; }
 
-            // 1〜100の配列を作成してシャッフル
+            // プレイヤー情報の構築
+            players = [];
+            
+            // デッキ生成（1-100）
             let deck = [];
             for(let i=1; i<=100; i++) deck.push(i);
             deck = shuffle(deck);
 
-            // プレイヤーに配布
-            players = [];
-            for(let i=0; i<count; i++) {
-                players.push({ id: i+1, number: deck[i] });
+            for(let i=1; i<=count; i++) {
+                const nameInput = document.getElementById(`p-name-${i}`).value.trim();
+                const displayName = nameInput ? nameInput : `プレイヤー ${i}`;
+                players.push({ name: displayName, number: deck[i-1] });
             }
 
-            // お題を決定
-            currentTheme = themes[Math.floor(Math.random() * themes.length)];
-            document.getElementById('current-theme').innerText = currentTheme;
-            document.getElementById('discuss-theme').innerText = currentTheme;
+            // お題の決定
+            const mode = document.querySelector('input[name="themeMode"]:checked').value;
+            if(mode === 'select') {
+                const idx = document.getElementById('theme-select').value;
+                currentThemeObj = themesData[idx];
+            } else {
+                // ランダム
+                currentThemeObj = themesData[Math.floor(Math.random() * themesData.length)];
+            }
+
+            // お題表示の更新
+            setThemeDisplay(currentThemeObj);
 
             // 状態リセット
             currentPlayerIndex = 0;
@@ -205,9 +359,25 @@
             switchScreen(sCheck);
         }
 
+        // お題表示の更新関数
+        function setThemeDisplay(theme) {
+            // チェック画面
+            document.getElementById('current-theme').innerText = theme.title;
+            document.getElementById('scale-min').innerText = theme.min;
+            document.getElementById('scale-max').innerText = theme.max;
+            document.getElementById('theme-scale').classList.remove('hidden');
+
+            // 会話画面
+            document.getElementById('discuss-theme').innerText = theme.title;
+            document.getElementById('discuss-min').innerText = theme.min;
+            document.getElementById('discuss-max').innerText = theme.max;
+        }
+
         // プレイヤー確認画面の更新
         function updateCheckScreen() {
-            document.getElementById('player-turn-text').innerText = `プレイヤー ${players[currentPlayerIndex].id} の番です`;
+            const p = players[currentPlayerIndex];
+            document.getElementById('player-turn-text').innerText = `${p.name} さんの番です`;
+            
             document.getElementById('card-area').classList.add('hidden');
             document.getElementById('btn-show-card').classList.remove('hidden');
             document.getElementById('btn-next-player').classList.add('hidden');
@@ -223,14 +393,12 @@
             document.getElementById('btn-next-player').classList.remove('hidden');
         }
 
-        // 次のプレイヤーへ、または会話フェーズへ
+        // 次のプレイヤーへ
         function nextPlayer() {
             currentPlayerIndex++;
             if(currentPlayerIndex < players.length) {
-                // 次の人がいる場合
                 updateCheckScreen();
             } else {
-                // 全員見終わった場合
                 switchScreen(sDiscuss);
             }
         }
@@ -240,7 +408,6 @@
             const list = document.getElementById('result-list');
             list.innerHTML = "";
             
-            // 数字の小さい順にソートして表示
             const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
             sortedPlayers.forEach((p, index) => {
@@ -249,7 +416,7 @@
                 li.innerHTML = `
                     <span>
                         <span class="result-rank">${index + 1}番目</span>
-                        プレイヤー ${p.id}
+                        ${p.name}
                     </span>
                     <span class="result-num">${p.number}</span>
                 `;
@@ -259,18 +426,15 @@
             switchScreen(sResult);
         }
 
-        // ゲームリセット
         function resetGame() {
             switchScreen(sSetup);
         }
 
-        // 画面切り替え用ユーティリティ
         function switchScreen(targetScreen) {
             [sSetup, sCheck, sDiscuss, sResult].forEach(s => s.classList.add('hidden'));
             targetScreen.classList.remove('hidden');
         }
 
-        // フィッシャー–イェーツのシャッフル
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
