@@ -25,7 +25,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             max-width: 450px;
             width: 100%;
-            margin-bottom: 30px; /* 下部に余裕を持たせる */
+            margin-bottom: 30px;
         }
         .btn {
             background-color: #d32f2f;
@@ -41,9 +41,9 @@
         }
         .btn:active { background-color: #b71c1c; }
         
-        /* 補助ボタン（枠線のみ） */
+        /* 補助ボタン */
         .btn-outline {
-            background-color: transparent;
+            background-color: white;
             border: 2px solid #d32f2f;
             color: #d32f2f;
             margin-top: 10px;
@@ -51,6 +51,7 @@
             font-size: 14px;
             border-radius: 20px;
             cursor: pointer;
+            font-weight: bold;
         }
         .btn-gray {
             background-color: #888;
@@ -65,11 +66,12 @@
         .action-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
-            gap: 5px;
+            margin-top: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         
         /* カードスタイル */
         .card-display {
@@ -122,8 +124,10 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             margin-bottom: 10px;
+            background-color: #fff;
         }
         
+        /* 名前入力リスト */
         #name-inputs-container {
             max-height: 200px;
             overflow-y: auto;
@@ -131,6 +135,7 @@
             border: 1px solid #eee;
             padding: 10px;
             border-radius: 5px;
+            background: #fafafa;
         }
         .name-row { margin-bottom: 8px; }
 
@@ -148,6 +153,7 @@
             cursor: pointer;
             text-align: center;
             font-size: 14px;
+            background: #fff;
         }
         input[type="radio"]:checked + .mode-label {
             background-color: #ffebee;
@@ -157,14 +163,19 @@
         }
         input[type="radio"] { display: none; }
 
-        /* 新規追加・管理フォーム */
+        /* サブフォーム（追加・管理画面） */
         .sub-form {
             background: #fff;
             border: 2px solid #d32f2f;
             padding: 15px;
             border-radius: 10px;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: left;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .sub-header {
             font-weight: bold; color: #d32f2f; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;
@@ -175,24 +186,27 @@
             max-height: 300px;
             overflow-y: auto;
             margin-bottom: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
         }
         .manage-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 8px 0;
+            padding: 10px;
             border-bottom: 1px solid #eee;
+            background: #fff;
         }
-        .manage-check { margin-right: 10px; transform: scale(1.2); }
+        .manage-check { margin-right: 10px; transform: scale(1.3); }
         .manage-title { flex: 1; font-size: 14px; margin-right: 10px;}
         .btn-delete {
             background-color: #333;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 5px 12px;
             border-radius: 5px;
             font-size: 12px;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         /* 結果リスト */
@@ -215,90 +229,8 @@
             padding: 5px 10px; border-radius: 5px; font-weight: bold;
         }
     </style>
-</head>
-<body>
-
-    <h1>itoっぽいの</h1>
-
-    <div id="screen-setup" class="container">
-        
-        <div class="input-group">
-            <label>プレイヤー人数</label>
-            <input type="number" id="player-count" value="3" min="2" max="10" onchange="generateNameInputs()">
-        </div>
-
-        <div class="input-group">
-            <label>プレイヤー名設定 (任意)</label>
-            <div id="name-inputs-container">
-                </div>
-        </div>
-
-        <div class="input-group">
-            <label>お題の決め方</label>
-            <div class="mode-select">
-                <label>
-                    <input type="radio" name="themeMode" value="random" checked onclick="toggleThemeSelect()">
-                    <span class="mode-label">ランダム</span>
-                </label>
-                <label>
-                    <input type="radio" name="themeMode" value="select" onclick="toggleThemeSelect()">
-                    <span class="mode-label">リストから選択</span>
-                </label>
-            </div>
-            
-            <div id="theme-selector-area" class="hidden">
-                <select id="theme-select"></select>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn-outline" style="border-color:#555; color:#555;" onclick="toggleManageForm()">⚙ テーマを管理・削除</button>
-                <button class="btn-outline" onclick="toggleAddForm()">＋ テーマを新しく追加</button>
-            </div>
-
-            <div id="add-theme-area" class="sub-form hidden">
-                <div class="sub-header">新しいテーマを追加</div>
-                
-                <label>テーマ名</label>
-                <input type="text" id="new-theme-title" placeholder="例：おふくろの味">
-                
-                <label>1 (最小) の例</label>
-                <input type="text" id="new-theme-min" placeholder="例：ただのゆで卵">
-                
-                <label>100 (最大) の例</label>
-                <input type="text" id="new-theme-max" placeholder="例：特製肉じゃが">
-
-                <div style="display:flex; gap:10px; justify-content: flex-end;">
-                    <button class="btn-gray" onclick="toggleAddForm()">キャンセル</button>
-                    <button class="btn-gray" style="background-color:#d32f2f;" onclick="saveNewTheme()">追加する</button>
-                </div>
-            </div>
-
-            <div id="manage-theme-area" class="sub-form hidden">
-                <div class="sub-header">テーマ管理</div>
-                <p style="font-size:12px; margin:0 0 10px 0;">チェックを外すとゲームに出ません。<br>「削除」を押すと完全に消えます。</p>
-                <div id="manage-list-container" class="manage-list">
-                    </div>
-                <div style="text-align: right;">
-                    <button class="btn-gray" onclick="toggleManageForm()">閉じる</button>
-                </div>
-            </div>
-        </div>
-
-        <button class="btn" onclick="startGame()">ゲームスタート</button>
-    </div>
-
-    <div id="screen-check" class="container hidden">
-        <div class="theme-box">
-            <div class="theme-title">今回のお題</div>
-            <div id="current-theme" class="theme-text">---</div>
-            <div id="theme-scale" class="theme-example hidden">
-                <div class="ex-item"><span class="ex-val">1</span><span id="scale-min">---</span></div>
-                <div style="align-self:center;">↔</div>
-                <div class="ex-item"><span class="ex-val">100</span><span id="scale-max">---</span></div>
-            </div>
-        </div>
-        
-        <h2 id="player-turn-text">〇〇さんの番です</h2>
+</
+の番です</h2>
         <p>スマホを受け取ったらボタンを押して<br>自分のナンバーを確認してください。</p>
         
         <div id="card-area" class="hidden">
