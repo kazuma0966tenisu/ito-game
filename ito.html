@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>itoっぽいの v8</title>
+<title>itoっぽいの v9</title>
 <style>
-    /* 診断バー */
+    /* 診断バー（念のため残しています） */
     #sys-check {
-        background: #333; color: yellow; padding: 10px; font-size: 12px;
+        background: #333; color: yellow; padding: 5px; font-size: 10px;
         position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-        text-align: left; font-family: monospace;
+        text-align: left; font-family: monospace; display: none;
     }
     body {
-        font-family: Arial, sans-serif;
+        font-family: "Helvetica Neue", Arial, sans-serif;
         background-color: #f0f2f5;
         color: #333;
         text-align: center;
         padding: 20px;
-        margin-top: 50px; /* バーの分空ける */
         display: flex; flex-direction: column; align-items: center;
-        min-height: 100vh;
+        min-height: 100vh; margin: 0;
     }
+    h1 { color: #d32f2f; margin: 20px 0 10px 0; font-weight: bold; }
+
     .container {
         background: white; padding: 20px; border-radius: 15px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -30,17 +31,68 @@
         background-color: #d32f2f; color: white; border: none;
         padding: 15px; font-size: 18px; border-radius: 30px;
         cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;
+        box-shadow: 0 4px 6px rgba(211, 47, 47, 0.2);
     }
-    .btn:active { background-color: #b71c1c; }
+    .btn:active { background-color: #b71c1c; transform: translateY(2px); }
+    
     .btn-outline {
         background: white; border: 2px solid #d32f2f; color: #d32f2f;
         padding: 10px; border-radius: 20px; margin-top: 10px; font-weight: bold;
+        cursor: pointer;
     }
-    .hidden { display: none !important; }
+    
+    /* フォーム要素 */
+    .input-group { text-align: left; margin-bottom: 15px; }
+    label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
     input, select {
-        padding: 10px; width: 100%; box-sizing: border-box;
-        border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; font-size: 16px;
+        padding: 12px; width: 100%; box-sizing: border-box;
+        border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-size: 16px;
+        background: #fafafa;
     }
+
+    /* モード切替ボタン */
+    .mode-select { display: flex; gap: 10px; margin-bottom: 10px; }
+    .mode-btn {
+        flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px;
+        background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .mode-btn.active { background: #ffebee; border-color: #d32f2f; color: #d32f2f; font-weight: bold; }
+
+    /* テーマ管理リスト */
+    .sub-form {
+        background: #fff; border: 2px solid #d32f2f; padding: 15px;
+        border-radius: 10px; margin-top: 15px; text-align: left;
+    }
+    .manage-list {
+        max-height: 300px; overflow-y: auto; margin: 10px 0;
+        border-top: 1px solid #eee;
+    }
+    .manage-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 0; border-bottom: 1px solid #eee;
+    }
+    .manage-title { font-size: 13px; flex: 1; margin-right: 10px; line-height: 1.4; }
+    
+    /* ボタン群 */
+    .btn-group { display: flex; gap: 5px; }
+    
+    /* 非表示ボタン */
+    .btn-hide {
+        border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+        transition: 0.2s;
+    }
+    /* OFF状態（表示中）: グレーアウト */
+    .btn-hide.off { background-color: #eee; color: #aaa; }
+    /* ON状態（非表示中）: 濃い色 */
+    .btn-hide.on { background-color: #555; color: white; font-weight: bold; }
+
+    /* 削除ボタン */
+    .btn-delete {
+        background-color: #333; color: white; border: none;
+        padding: 6px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+    }
+
+    /* ゲーム画面用 */
     .theme-box {
         background: #ffebee; border: 2px dashed #d32f2f; padding: 15px;
         margin: 20px 0; border-radius: 10px;
@@ -49,60 +101,66 @@
         background: linear-gradient(135deg, #ff5252, #b71c1c); color: white;
         width: 160px; height: 240px; margin: 20px auto;
         display: flex; align-items: center; justify-content: center;
-        font-size: 80px; font-weight: bold; border-radius: 10px;
-        border: 5px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        font-size: 80px; font-weight: bold; border-radius: 12px;
+        border: 6px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    .sub-form {
-        background: #fff; border: 2px solid #d32f2f; padding: 15px;
-        border-radius: 10px; margin-top: 15px; text-align: left;
-    }
-    .manage-item {
-        display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;
-    }
+    
+    .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-<div id="sys-check">システム読込中...</div>
+<div id="sys-check"></div>
+
+<h1>itoっぽいの</h1>
 
 <div id="screen-setup" class="container">
-    <h2 style="color:#d32f2f; margin-top:0;">itoっぽいの</h2>
-    
-    <label style="display:block; text-align:left; font-weight:bold;">プレイヤー人数</label>
-    <input type="number" id="player-count" value="3" min="2" max="10">
-
-    <label style="display:block; text-align:left; font-weight:bold;">名前設定 (任意)</label>
-    <div id="name-inputs"></div>
-
-    <label style="display:block; text-align:left; font-weight:bold; margin-top:10px;">お題の決め方</label>
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <button id="mode-random" class="btn-outline" style="background:#ffebee; flex:1;" onclick="setMode('random')">ランダム</button>
-        <button id="mode-select" class="btn-outline" style="flex:1; color:#666; border-color:#ccc;" onclick="setMode('select')">リスト選択</button>
-    </div>
-    
-    <div id="theme-selector-area" class="hidden">
-        <select id="theme-select"></select>
+    <div class="input-group">
+        <label>プレイヤー人数</label>
+        <input type="number" id="player-count" value="3" min="2" max="10">
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-        <button class="btn-outline" style="border-color:#666; color:#666;" onclick="toggleManage()">⚙ テーマ管理・削除</button>
-        <button class="btn-outline" onclick="toggleAdd()">＋ テーマ新規追加</button>
+    <div class="input-group">
+        <label>プレイヤー名設定 (任意)</label>
+        <div id="name-inputs"></div>
+    </div>
+
+    <div class="input-group">
+        <label>お題の決め方</label>
+        <div class="mode-select">
+            <button id="btn-mode-random" class="mode-btn active" onclick="setMode('random')">ランダム</button>
+            <button id="btn-mode-select" class="mode-btn" onclick="setMode('select')">リストから選択</button>
+        </div>
+        
+        <div id="theme-selector-area" class="hidden">
+            <select id="theme-select"></select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+            <button class="btn-outline" style="border-color:#666; color:#666;" onclick="toggleManage()">⚙ テーマを削除・管理</button>
+            <button class="btn-outline" onclick="toggleAdd()">＋ テーマを新しく追加</button>
+        </div>
     </div>
 
     <div id="add-form" class="sub-form hidden">
-        <b>新しいテーマ</b>
+        <div style="font-weight:bold; color:#d32f2f; margin-bottom:10px;">新しいテーマを追加</div>
         <input type="text" id="new-t" placeholder="テーマ名">
-        <input type="text" id="new-min" placeholder="1の例">
-        <input type="text" id="new-max" placeholder="100の例">
-        <button class="btn" style="padding:10px; margin-top:5px;" onclick="addTheme()">追加</button>
-        <button class="btn-outline" style="border:none; margin-top:0;" onclick="toggleAdd()">閉じる</button>
+        <input type="text" id="new-min" placeholder="1 (最小) の例">
+        <input type="text" id="new-max" placeholder="100 (最大) の例">
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn-outline" style="border:none; margin:0;" onclick="toggleAdd()">キャンセル</button>
+            <button class="btn" style="padding:10px; margin:0; width:auto;" onclick="addTheme()">追加する</button>
+        </div>
     </div>
 
     <div id="manage-form" class="sub-form hidden">
-        <b>テーマ管理</b>
-        <div id="manage-list" style="max-height:200px; overflow-y:scroll; margin:10px 0;"></div>
-        <button class="btn-outline" style="width:100%;" onclick="toggleManage()">閉じる</button>
-        <button class="btn-outline" style="width:100%; border:none; color:#888; font-size:12px;" onclick="fullReset()">全データ初期化</button>
+        <div style="font-weight:bold; color:#666; margin-bottom:5px;">テーマ管理</div>
+        <p style="font-size:11px; color:#888; margin:0 0 10px 0;">「非表示」を押すと一時的にリストから消えます（削除はされません）。</p>
+        <div id="manage-list" class="manage-list"></div>
+        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+            <button class="btn-outline" style="border:none; color:#999; font-size:12px; margin:0;" onclick="fullReset()">全データ初期化</button>
+            <button class="btn-outline" style="margin:0;" onclick="toggleManage()">閉じる</button>
+        </div>
     </div>
 
     <button class="btn" onclick="startGame()">ゲームスタート</button>
@@ -110,18 +168,20 @@
 
 <div id="screen-game" class="container hidden">
     <div class="theme-box">
-        <div style="font-size:12px; color:#d32f2f; font-weight:bold;">お題</div>
-        <div id="game-theme" style="font-size:24px; font-weight:bold;"></div>
-        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:14px;">
-            <div style="text-align:center;">1: <b id="game-min"></b></div>
-            <div style="text-align:center;">100: <b id="game-max"></b></div>
+        <div style="font-size:12px; color:#d32f2f; font-weight:bold;">今回のお題</div>
+        <div id="game-theme" style="font-size:22px; font-weight:bold; margin:5px 0;"></div>
+        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:14px; background:rgba(255,255,255,0.6); padding:5px; border-radius:5px;">
+            <div style="text-align:center; flex:1;">1: <b id="game-min" style="color:#d32f2f;"></b></div>
+            <div style="align-self:center; color:#ccc;">↔</div>
+            <div style="text-align:center; flex:1;">100: <b id="game-max" style="color:#d32f2f;"></b></div>
         </div>
     </div>
+    
     <h2 id="turn-msg"></h2>
     
     <div id="card-area" class="hidden">
         <div class="card-display" id="my-num"></div>
-        <p>確認したら「次へ」を押して<br>次の人に渡してください</p>
+        <p style="font-size:14px;">覚えたら「隠して次へ」を押して<br>次の人に渡してください</p>
     </div>
 
     <button id="btn-action" class="btn" onclick="showNum()">数字を見る</button>
@@ -129,132 +189,201 @@
 
 <div id="screen-result" class="container hidden">
     <h2>結果発表</h2>
-    <ul id="res-list" style="text-align:left; padding-left:20px;"></ul>
+    <ul id="res-list" style="list-style:none; padding:0; text-align:left;"></ul>
     <button class="btn" onclick="location.reload()">もう一度遊ぶ</button>
 </div>
 
 <script>
-// --- エラー監視システム ---
-window.onerror = function(msg, url, line) {
-    const bar = document.getElementById('sys-check');
-    bar.style.background = "red";
-    bar.style.color = "white";
-    bar.innerHTML = "❌ エラー: " + msg + " (行:" + line + ")";
-    return false;
-};
+// データ保存キー (v9に更新)
+const KEY = 'ito_v9_data';
 
-// --- ここからゲーム本体 ---
-const KEY = 'ito_v8';
-let themes = [];
-let players = [];
-let curIdx = 0;
-let mode = 'random';
-
+// デフォルトお題リスト (20個)
 const defaults = [
     {t:"生き物の強さ", min:"アリ", max:"ライオン"},
     {t:"コンビニ商品の人気", min:"水", max:"からあげクン"},
-    {t:"おにぎりの具", min:"塩むすび", max:"いくら"},
-    {t:"カバンにあると嬉しい", min:"ゴミ", max:"100万円"},
-    {t:"強そうな言葉", min:"ぷよぷよ", max:"撃滅"}
+    {t:"ゾンビと戦う時の武器", min:"素手", max:"戦車"},
+    {t:"子供に人気な給食のメニュー", min:"脱脂粉乳", max:"揚げパン"},
+    {t:"怖いもの", min:"あくび", max:"死・お化け"},
+    {t:"おにぎりの具の人気", min:"塩なし白米", max:"いくら"},
+    {t:"欲しい超能力・特殊能力", min:"爪が早く伸びる", max:"空を飛ぶ"},
+    {t:"カバンに入っていたら嬉しいもの", min:"ゴミ", max:"現金100万円"},
+    {t:"強そうな言葉・響き", min:"ぷよぷよ", max:"撃滅"},
+    {t:"なりたい職業", min:"ブラック企業の平社員", max:"YouTuber"},
+    {t:"無人島に持っていきたいもの", min:"砂", max:"ナイフ"},
+    {t:"恋人に求める条件", min:"呼吸をしている", max:"大富豪で優しい美形"},
+    {t:"1億円もらったらやりたいこと", min:"貯金", max:"世界一周"},
+    {t:"やめられない・とまらないこと", min:"勉強", max:"スマホを見る"},
+    {t:"言われて嬉しい褒め言葉", min:"人間だね", max:"天才"},
+    {t:"人生で大切なもの", min:"プライド", max:"家族"},
+    {t:"もらって嬉しいプレゼント", min:"石ころ", max:"最新家電"},
+    {t:"初デートで行きたい場所", min:"実家", max:"夜景の見えるレストラン"},
+    {t:"地味に痛いこと", min:"ささくれ", max:"骨折"},
+    {t:"「この人、仕事できるな」と思う瞬間", min:"挨拶ができる", max:"トラブル即解決"}
 ];
+
+let themes = [];
+let mode = 'random';
+let players = [];
+let curIdx = 0;
 
 // 初期化
 window.onload = function() {
-    try {
-        // データのロード
-        const saved = localStorage.getItem(KEY);
-        themes = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaults));
-        
-        // イベント設定
-        document.getElementById('player-count').addEventListener('input', renderInputs);
-        renderInputs(); // これが動けば入力欄が出る
-        updateSelect();
-
-        // 成功サイン
-        const bar = document.getElementById('sys-check');
-        bar.style.background = "#4CAF50";
-        bar.innerHTML = "✅ システム正常: 準備完了";
-        setTimeout(() => { bar.style.display = 'none'; }, 2000); // 2秒後に消す
-        
-    } catch(e) {
-        throw e; // エラー監視へ
+    // データ読み込み
+    const saved = localStorage.getItem(KEY);
+    if(saved) {
+        themes = JSON.parse(saved);
+    } else {
+        // 初回はデフォルト全てに hidden: false (表示) を付与
+        themes = defaults.map(d => ({...d, hidden: false}));
+        save();
     }
+
+    // UIイベント設定
+    document.getElementById('player-count').addEventListener('input', renderInputs);
+    renderInputs();
+    updateSelect();
 };
 
-// 名前欄生成
+function save() {
+    localStorage.setItem(KEY, JSON.stringify(themes));
+    updateSelect();
+}
+
 function renderInputs() {
     const num = document.getElementById('player-count').value;
     const div = document.getElementById('name-inputs');
     div.innerHTML = "";
     for(let i=1; i<=num; i++) {
-        div.innerHTML += `<input type="text" id="p${i}" placeholder="プレイヤー${i}の名前">`;
+        div.innerHTML += `<input type="text" id="p${i}" placeholder="プレイヤー${i}の名前" style="margin-bottom:8px;">`;
     }
 }
 
-// モード切替
 function setMode(m) {
     mode = m;
-    document.getElementById('mode-random').style.background = m==='random' ? '#ffebee' : 'white';
-    document.getElementById('mode-select').style.background = m==='select' ? '#ffebee' : 'white';
-    document.getElementById('theme-selector-area').classList.toggle('hidden', m!=='select');
+    document.getElementById('btn-mode-random').className = m === 'random' ? 'mode-btn active' : 'mode-btn';
+    document.getElementById('btn-mode-select').className = m === 'select' ? 'mode-btn active' : 'mode-btn';
+    document.getElementById('theme-selector-area').classList.toggle('hidden', m !== 'select');
 }
 
-// データ保存
-function save() { localStorage.setItem(KEY, JSON.stringify(themes)); updateSelect(); }
-
-// 選択肢更新
 function updateSelect() {
     const sel = document.getElementById('theme-select');
     sel.innerHTML = "";
-    themes.forEach(t => {
-        const op = document.createElement('option');
-        op.value = t.t; op.text = t.t; sel.appendChild(op);
-    });
+    // 非表示(hidden:true)でないものだけ表示
+    const activeThemes = themes.filter(t => !t.hidden);
+    
+    if(activeThemes.length === 0) {
+        sel.innerHTML = "<option>有効なお題がありません</option>";
+    } else {
+        activeThemes.forEach(t => {
+            const op = document.createElement('option');
+            op.value = t.t; op.text = t.t;
+            sel.appendChild(op);
+        });
+    }
 }
 
-// 追加・管理画面
-function toggleAdd() { document.getElementById('add-form').classList.toggle('hidden'); document.getElementById('manage-form').classList.add('hidden'); }
-function toggleManage() { 
-    document.getElementById('manage-form').classList.toggle('hidden'); 
+// 画面切り替え系
+function toggleAdd() {
+    document.getElementById('add-form').classList.toggle('hidden');
+    document.getElementById('manage-form').classList.add('hidden');
+}
+function toggleManage() {
+    document.getElementById('manage-form').classList.toggle('hidden');
     document.getElementById('add-form').classList.add('hidden');
     renderManage();
 }
 
+// テーマ追加
 function addTheme() {
     const t = document.getElementById('new-t').value;
     const min = document.getElementById('new-min').value;
     const max = document.getElementById('new-max').value;
     if(t && min && max) {
-        themes.push({t, min, max}); save();
+        themes.push({t, min, max, hidden: false});
+        save();
         document.getElementById('new-t').value = "";
+        document.getElementById('new-min').value = "";
+        document.getElementById('new-max').value = "";
         toggleAdd();
         alert("追加しました");
     }
 }
 
+// 管理リスト描画 (非表示ボタン実装)
 function renderManage() {
     const list = document.getElementById('manage-list');
     list.innerHTML = "";
+    
     themes.forEach((t, i) => {
-        list.innerHTML += `<div class="manage-item">
-            <span>${t.t}</span>
-            <button onclick="delTheme(${i})" style="background:#333; color:white;">削除</button>
-        </div>`;
+        const row = document.createElement('div');
+        row.className = "manage-item";
+        
+        // タイトル (非表示なら薄くする)
+        const titleColor = t.hidden ? "#ccc" : "#333";
+        
+        // 非表示ボタンの状態
+        const hideClass = t.hidden ? "btn-hide on" : "btn-hide off";
+        const hideText = "非表示";
+
+        row.innerHTML = `
+            <span class="manage-title" style="color:${titleColor}">${t.t}</span>
+            <div class="btn-group">
+                <button class="${hideClass}" onclick="toggleHide(${i})">${hideText}</button>
+                <button class="btn-delete" onclick="delTheme(${i})">削除</button>
+            </div>
+        `;
+        list.appendChild(row);
     });
 }
-function delTheme(i) {
-    if(confirm("削除しますか？")) { themes.splice(i,1); save(); renderManage(); }
-}
-function fullReset() {
-    if(confirm("全て初期化しますか？")) { localStorage.removeItem(KEY); location.reload(); }
+
+// 非表示トグル
+function toggleHide(i) {
+    themes[i].hidden = !themes[i].hidden;
+    save();
+    renderManage(); // リスト再描画
 }
 
-// ゲーム開始
+function delTheme(i) {
+    if(confirm("本当に削除しますか？")) {
+        themes.splice(i, 1);
+        save();
+        renderManage();
+    }
+}
+
+function fullReset() {
+    if(confirm("全てのデータを初期状態に戻しますか？")) {
+        localStorage.removeItem(KEY);
+        location.reload();
+    }
+}
+
+// ゲーム開始ロジック
 function startGame() {
     const count = document.getElementById('player-count').value;
-    players = [];
     
-    // 1-100作成
+    // お題の決定
+    const activeThemes = themes.filter(t => !t.hidden);
+    if(activeThemes.length === 0) {
+        alert("有効なお題がありません。「管理」から非表示を解除してください。");
+        return;
+    }
+
+    let selectedTheme;
+    if(mode === 'random') {
+        selectedTheme = activeThemes[Math.floor(Math.random() * activeThemes.length)];
+    } else {
+        const val = document.getElementById('theme-select').value;
+        selectedTheme = activeThemes.find(t => t.t === val) || activeThemes[0];
+    }
+
+    // 画面セット
+    document.getElementById('game-theme').innerText = selectedTheme.t;
+    document.getElementById('game-min').innerText = selectedTheme.min;
+    document.getElementById('game-max').innerText = selectedTheme.max;
+
+    // プレイヤーとカード準備
+    players = [];
     let nums = [];
     for(let i=1; i<=100; i++) nums.push(i);
     // シャッフル
@@ -268,19 +397,6 @@ function startGame() {
         players.push({name, val: nums[i-1]});
     }
 
-    // お題決定
-    let theme;
-    if(mode === 'random') theme = themes[Math.floor(Math.random()*themes.length)];
-    else {
-        const val = document.getElementById('theme-select').value;
-        theme = themes.find(t => t.t === val) || themes[0];
-    }
-
-    // 画面セット
-    document.getElementById('game-theme').innerText = theme.t;
-    document.getElementById('game-min').innerText = theme.min;
-    document.getElementById('game-max').innerText = theme.max;
-    
     curIdx = 0;
     showTurn();
     
@@ -291,19 +407,19 @@ function startGame() {
 function showTurn() {
     document.getElementById('turn-msg').innerText = `${players[curIdx].name} さんの番`;
     document.getElementById('card-area').classList.add('hidden');
-    
     const btn = document.getElementById('btn-action');
     btn.innerText = "数字を見る";
     btn.onclick = showNum;
+    btn.style.background = "#d32f2f";
 }
 
 function showNum() {
     document.getElementById('my-num').innerText = players[curIdx].val;
     document.getElementById('card-area').classList.remove('hidden');
-    
     const btn = document.getElementById('btn-action');
     btn.innerText = "隠して次へ";
     btn.onclick = nextTurn;
+    btn.style.background = "#333"; // 次へボタンは色を変える
 }
 
 function nextTurn() {
@@ -316,9 +432,17 @@ function nextTurn() {
         document.getElementById('screen-result').classList.remove('hidden');
         
         const list = document.getElementById('res-list');
-        players.sort((a,b) => a.val - b.val);
-        players.forEach((p, i) => {
-            list.innerHTML += `<li>${i+1}番目: <b>${p.val}</b> (${p.name})</li>`;
+        list.innerHTML = "";
+        
+        // 結果を数字順にソート
+        const sorted = [...players].sort((a,b) => a.val - b.val);
+        
+        sorted.forEach((p, i) => {
+            list.innerHTML += `
+                <li style="background:#fff; border-bottom:1px solid #eee; padding:10px; display:flex; justify-content:space-between;">
+                    <span style="font-weight:bold; color:#d32f2f;">${i+1}番目: ${p.name}</span>
+                    <span style="background:#d32f2f; color:white; padding:2px 8px; border-radius:5px; font-weight:bold;">${p.val}</span>
+                </li>`;
         });
     }
 }
