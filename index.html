@@ -161,7 +161,7 @@
         }
         input[type="radio"] { display: none; }
 
-        /* サブフォーム（追加・管理画面） */
+        /* サブフォーム */
         .sub-form {
             background: #fff;
             border: 2px solid #d32f2f;
@@ -383,15 +383,24 @@
         // 初期化処理
         window.onload = function() {
             try {
-                document.getElementById('player-count').addEventListener('input', generateNameInputs);
-                generateNameInputs(); 
-                loadAllThemes();      
+                const countInput = document.getElementById('player-count');
+                if(countInput) {
+                    countInput.addEventListener('input', generateNameInputs);
+                    generateNameInputs(); // 名前入力欄を生成
+                    loadAllThemes();      // テーマを読み込み
+                    
+                    // 成功メッセージ（JSが動いているか確認用）
+                    alert("準備OK！");
+                } else {
+                    alert("エラー：画面の読み込みに失敗しました。");
+                }
             } catch (e) {
                 console.error("Init Error:", e);
+                alert("初期化エラーが発生しました：" + e);
             }
         };
 
-        // 名前入力欄の生成（v3.0仕様）
+        // 名前入力欄の生成
         function generateNameInputs() {
             const countInput = document.getElementById('player-count');
             let count = parseInt(countInput.value);
@@ -419,7 +428,7 @@
                 } else {
                     // データがない場合はデフォルトを使用
                     allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
-                    // v3.0の旧データを救済
+                    // 旧データを救済
                     const oldCustom = localStorage.getItem('myCustomThemes');
                     if(oldCustom) {
                         try {
@@ -434,7 +443,6 @@
                 }
                 updateThemeSelect();
             } catch (e) {
-                // エラー時はデフォルト復旧
                 allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
                 updateThemeSelect();
             }
@@ -445,7 +453,6 @@
             updateThemeSelect();
         }
 
-        // 全データ初期化（修復用）
         function resetAllData() {
             if(confirm("全てのデータを初期化して元に戻しますか？")) {
                 localStorage.removeItem('itoThemesV4');
@@ -453,7 +460,6 @@
             }
         }
 
-        // セレクトボックスの更新
         function updateThemeSelect() {
             const select = document.getElementById('theme-select');
             select.innerHTML = ""; 
@@ -470,23 +476,22 @@
             activeThemes.forEach((t) => {
                 const option = document.createElement('option');
                 option.value = t.title;
-                option.text = t.title; // タイトルのみ表示
+                option.text = t.title; 
                 select.appendChild(option);
             });
         }
 
-        // フォーム表示切替
         function toggleAddForm() {
             const addArea = document.getElementById('add-theme-area');
             const manageArea = document.getElementById('manage-theme-area');
-            manageArea.classList.add('hidden'); // 他方は閉じる
+            manageArea.classList.add('hidden');
             addArea.classList.toggle('hidden');
         }
 
         function toggleManageForm() {
             const addArea = document.getElementById('add-theme-area');
             const manageArea = document.getElementById('manage-theme-area');
-            addArea.classList.add('hidden'); // 他方は閉じる
+            addArea.classList.add('hidden');
             manageArea.classList.toggle('hidden');
             
             if(!manageArea.classList.contains('hidden')) {
@@ -494,7 +499,6 @@
             }
         }
 
-        // テーマ管理リストの描画
         function renderManageList() {
             const container = document.getElementById('manage-list-container');
             container.innerHTML = "";
@@ -508,7 +512,6 @@
                 const row = document.createElement('div');
                 row.className = "manage-item";
                 
-                // チェックボックス
                 const checkbox = document.createElement('input');
                 checkbox.type = "checkbox";
                 checkbox.className = "manage-check";
@@ -516,16 +519,14 @@
                 checkbox.onchange = function() {
                     allThemes[index].active = checkbox.checked;
                     saveThemesToStorage();
-                    updateThemeSelect(); // 即時反映
+                    updateThemeSelect(); 
                 };
 
-                // タイトル
                 const titleSpan = document.createElement('span');
                 titleSpan.className = "manage-title";
                 titleSpan.innerText = t.title;
                 if(!t.active) titleSpan.style.color = "#aaa"; 
 
-                // 削除ボタン
                 const delBtn = document.createElement('button');
                 delBtn.innerText = "削除";
                 delBtn.className = "btn-delete";
@@ -545,7 +546,5 @@
             });
         }
 
-        // 新規テーマの保存処理
         function saveNewTheme() {
-            const title = document.getElementById('new-theme-title').value.trim();
-            const 
+            const title = do
