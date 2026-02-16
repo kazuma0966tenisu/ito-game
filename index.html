@@ -59,7 +59,7 @@
             color: white;
             border-radius: 20px;
             padding: 8px 15px;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
         }
         
@@ -129,8 +129,6 @@
         
         /* 名前入力リスト */
         #name-inputs-container {
-            max-height: 200px;
-            overflow-y: auto;
             margin-bottom: 15px;
             border: 1px solid #eee;
             padding: 10px;
@@ -171,11 +169,6 @@
             border-radius: 10px;
             margin-top: 15px;
             text-align: left;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         .sub-header {
             font-weight: bold; color: #d32f2f; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;
@@ -183,7 +176,7 @@
 
         /* テーマ管理リスト */
         .manage-list {
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             margin-bottom: 10px;
             border: 1px solid #eee;
@@ -229,656 +222,85 @@
             padding: 5px 10px; border-radius: 5px; font-weight: bold;
         }
     </style>
-</
-の番です</h2>
-        <p>スマホを受け取ったらボタンを押して<br>自分のナンバーを確認してください。</p>
+</head>
+<body>
+
+    <h1>itoっぽいの</h1>
+
+    <div id="screen-setup" class="container">
         
-        <div id="card-area" class="hidden">
-            <div class="card-display" id="my-number">?</div>
-            <p>この数字をお題に沿って表現してください！<br>覚えたら「隠す」を押して次の人に渡してください。</p>
+        <div class="input-group">
+            <label>プレイヤー人数</label>
+            <input type="number" id="player-count" value="3" min="2" max="10">
         </div>
 
-        <button id="btn-show-card" class="btn" onclick="showCard()">数字を見る</button>
-        <button id="btn-next-player" class="btn hidden" onclick="nextPlayer()">隠して次へ</button>
-    </div>
+        <div class="input-group">
+            <label>プレイヤー名設定 (任意)</label>
+            <div id="name-inputs-container">
+                </div>
+        </div>
 
-    <div id="screen-discuss" class="container hidden">
-        <div class="theme-box">
-            <div class="theme-title">お題</div>
-            <div class="theme-text" id="discuss-theme">---</div>
-            <div class="theme-example" id="discuss-scale">
-                <div class="ex-item"><span class="ex-val">1</span><span id="discuss-min">---</span></div>
-                <div style="align-self:center;">↔</div>
-                <div class="ex-item"><span class="ex-val">100</span><span id="discuss-max">---</span></div>
+        <div class="input-group">
+            <label>お題の決め方</label>
+            <div class="mode-select">
+                <label>
+                    <input type="radio" name="themeMode" value="random" checked onclick="toggleThemeSelect()">
+                    <span class="mode-label">ランダム</span>
+                </label>
+                <label>
+                    <input type="radio" name="themeMode" value="select" onclick="toggleThemeSelect()">
+                    <span class="mode-label">リストから選択</span>
+                </label>
+            </div>
+            
+            <div id="theme-selector-area" class="hidden">
+                <select id="theme-select"></select>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-outline" style="border-color:#555; color:#555;" onclick="toggleManageForm()">⚙ テーマを削除・管理</button>
+                <button class="btn-outline" onclick="toggleAddForm()">＋ テーマを新しく追加</button>
+            </div>
+
+            <div id="add-theme-area" class="sub-form hidden">
+                <div class="sub-header">新しいテーマを追加</div>
+                
+                <label>テーマ名</label>
+                <input type="text" id="new-theme-title" placeholder="例：おふくろの味">
+                
+                <label>1 (最小) の例</label>
+                <input type="text" id="new-theme-min" placeholder="例：ただのゆで卵">
+                
+                <label>100 (最大) の例</label>
+                <input type="text" id="new-theme-max" placeholder="例：特製肉じゃが">
+
+                <div style="display:flex; gap:10px; justify-content: flex-end; margin-top:10px;">
+                    <button class="btn-gray" onclick="toggleAddForm()">キャンセル</button>
+                    <button class="btn-gray" style="background-color:#d32f2f;" onclick="saveNewTheme()">追加する</button>
+                </div>
+            </div>
+
+            <div id="manage-theme-area" class="sub-form hidden">
+                <div class="sub-header">テーマ管理</div>
+                <p style="font-size:12px; margin:0 0 10px 0; color:#666;">
+                    チェックを外すとゲームに出ません。<br>
+                    「削除」を押すと完全に消えます。
+                </p>
+                <div id="manage-list-container" class="manage-list">
+                    </div>
+                <div style="text-align: right; display:flex; justify-content:space-between; margin-top:10px;">
+                    <button class="btn-gray" style="font-size:10px;" onclick="resetAllData()">全データ初期化</button>
+                    <button class="btn-gray" onclick="toggleManageForm()">閉じる</button>
+                </div>
             </div>
         </div>
-        <h2>会話タイム！</h2>
-        <p>全員カードを確認しました。</p>
-        <p>自分の数字をテーマに沿った言葉で表現し、<br><strong>小さい順</strong>にカードを出せるよう話し合ってください。</p>
-        <p style="font-size:12px; color:#666;">※直接数字を言うのはNGです！</p>
-        
-        <button class="btn" onclick="showResult()">結果発表（オープン）</button>
+
+        <button class="btn" onclick="startGame()">ゲームスタート</button>
     </div>
 
-    <div id="screen-result" class="container hidden">
-        <h2>結果発表</h2>
-        <p>小さい順に並んでいるか確認しましょう！</p>
-        <ul id="result-list" class="result-list">
-            </ul>
-        <button class="btn" onclick="resetGame()">もう一度遊ぶ</button>
-    </div>
-
-    <script>
-        // デフォルトのお題リスト
-        const defaultThemesRaw = [
-            { title: "生き物の強さ", min: "アリ", max: "ライオン" },
-            { title: "コンビニ商品の人気", min: "水", max: "からあげクン" },
-            { title: "ゾンビと戦う時の武器", min: "素手", max: "戦車" },
-            { title: "子供に人気な給食のメニュー", min: "脱脂粉乳", max: "揚げパン" },
-            { title: "怖いもの", min: "あくび", max: "死・お化け" },
-            { title: "おにぎりの具の人気", min: "塩なし白米", max: "いくら" },
-            { title: "欲しい超能力・特殊能力", min: "爪が早く伸びる", max: "空を飛ぶ" },
-            { title: "カバンに入っていたら嬉しいもの", min: "ゴミ", max: "現金100万円" },
-            { title: "強そうな言葉・響き", min: "ぷよぷよ", max: "撃滅" },
-            { title: "なりたい職業", min: "ブラック企業の平社員", max: "YouTuber" },
-            { title: "無人島に持っていきたいもの", min: "砂", max: "ナイフ" },
-            { title: "恋人に求める条件", min: "呼吸をしている", max: "大富豪で優しい美形" },
-            { title: "1億円もらったらやりたいこと", min: "貯金", max: "世界一周" },
-            { title: "やめられない・とまらないこと", min: "勉強", max: "スマホを見る" },
-            { title: "言われて嬉しい褒め言葉", min: "人間だね", max: "天才" },
-            { title: "人生で大切なもの", min: "プライド", max: "家族" },
-            { title: "もらって嬉しいプレゼント", min: "石ころ", max: "最新家電" },
-            { title: "初デートで行きたい場所", min: "実家", max: "夜景の見えるレストラン" },
-            { title: "地味に痛いこと", min: "ささくれ", max: "骨折" },
-            { title: "「この人、仕事できるな」と思う瞬間", min: "挨拶ができる", max: "トラブル即解決" },
-            { title: "映画のジャンルの人気", min: "不人気", max: "大ヒット" },
-            { title: "カッコいい仕草", min: "ダサい", max: "超クール" },
-            { title: "住みたい国・場所", min: "絶対住みたくない", max: "今すぐ移住したい" }
-        ];
-
-        let allThemes = []; // ここに全テーマが入ります（activeフラグ付き）
-        let players = []; 
-        let currentPlayerIndex = 0;
-        let currentThemeObj = null;
-
-        // 要素の取得
-        const sSetup = document.getElementById('screen-setup');
-        const sCheck = document.getElementById('screen-check');
-        const sDiscuss = document.getElementById('screen-discuss');
-        const sResult = document.getElementById('screen-result');
-
-        // 初期化処理
-        window.onload = function() {
-            generateNameInputs(); // 名前入力欄の生成
-            loadAllThemes();      // テーマ読み込み
-        };
-
-        // テーマの読み込み（初回はデフォルトをローカルストレージに保存）
-        function loadAllThemes() {
-            const stored = localStorage.getItem('itoThemesV4');
-            
-            if (stored) {
-                // すでに保存データがある場合
-                allThemes = JSON.parse(stored);
-            } else {
-                // 初回起動時：デフォルトリストに active: true を付与して保存
-                allThemes = defaultThemesRaw.map(t => ({ ...t, active: true }));
-                // 以前のバージョンのカスタムテーマがあれば救済して統合
-                const oldCustom = localStorage.getItem('myCustomThemes');
-                if(oldCustom) {
-                    const oldParsed = JSON.parse(oldCustom);
-                    const convertedOld = oldParsed.map(t => ({ ...t, active: true }));
-                    allThemes = allThemes.concat(convertedOld);
-                }
-                saveThemesToStorage();
-            }
-            updateThemeSelect();
-        }
-
-        function saveThemesToStorage() {
-            localStorage.setItem('itoThemesV4', JSON.stringify(allThemes));
-            updateThemeSelect();
-        }
-
-        // セレクトボックスの更新（activeなものだけ表示、タイトルのみ）
-        function updateThemeSelect() {
-            const select = document.getElementById('theme-select');
-            select.innerHTML = ""; 
-            
-            // 有効なテーマのみ抽出
-            const activeThemes = allThemes.filter(t => t.active);
-            
-            activeThemes.forEach((t) => {
-                const option = document.createElement('option');
-                option.value = t.title; // 値としてタイトルを使う
-                option.text = t.title;  // 表示はタイトルのみ！
-                select.appendChild(option);
-            });
-        }
-
-        // フォーム表示切替
-        function toggleAddForm() {
-            document.getElementById('add-theme-area').classList.toggle('hidden');
-            document.getElementById('manage-theme-area').classList.add('hidden'); // 他方は閉じる
-        }
-
-        function toggleManageForm() {
-            const area = document.getElementById('manage-theme-area');
-            area.classList.toggle('hidden');
-            document.getElementById('add-theme-area').classList.add('hidden'); // 他方は閉じる
-            
-            if(!area.classList.contains('hidden')) {
-                renderManageList();
-            }
-        }
-
-        // テーマ管理リストの描画
-        function renderManageList() {
-            const container = document.getElementById('manage-list-container');
-            container.innerHTML = "";
-
-            allThemes.forEach((t, index) => {
-                const row = document.createElement('div');
-                row.className = "manage-item";
-                
-                // チェックボックス（表示/非表示）
-                const checkbox = document.createElement('input');
-                checkbox.type = "checkbox";
-                checkbox.className = "manage-check";
-                checkbox.checked = t.active;
-                checkbox.onchange = function() {
-                    allThemes[index].active = checkbox.checked;
-                    saveThemesToStorage();
-                };
-
-                // タイトル
-                const titleSpan = document.createElement('span');
-                titleSpan.className = "manage-title";
-                titleSpan.innerText = t.title;
-                if(!t.active) titleSpan.style.color = "#aaa"; // 非表示は薄く
-
-                // 削除ボタン
-                const delBtn = document.createElement('button');
-                delBtn.innerText = "削除";
-                delBtn.className = "btn-delete";
-                delBtn.onclick = function() {
-                    if(confirm(`「${t.title}」を完全に削除してよろしいですか？\n（復活させるには再度追加する必要があります）`)) {
-                        allThemes.splice(index, 1); // 配列から削除
-                        saveThemesToStorage();
-                        renderManageList(); // リスト再描画
-                    }
-                };
-
-                row.appendChild(checkbox);
-                row.appendChild(titleSpan);
-                row.appendChild(delBtn);
-                container.appendChild(row);
-            });
-        }
-
-        // 新規テーマの保存処理
-        function saveNewTheme() {
-            const title = document.getElementById('new-theme-title').value.trim();
-            const min = document.getElementById('new-theme-min').value.trim();
-            const max = document.getElementById('new-theme-max').value.trim();
-
-            if(!title || !min || !max) {
-                alert("すべての項目を入力してください");
-                return;
-            }
-
-            const newTheme = { title: title, min: min, max: max, active: true };
-            allThemes.push(newTheme);
-            saveThemesToStorage();
-
-            // 入力欄クリア & 閉じる
-            document.getElementById('new-theme-title').value = "";
-            document.getElementById('new-theme-min').value = "";
-            document.getElementById('new-theme-max').value = "";
-            toggleAddForm();
-            
-            alert(`「${title}」を追加しました！`);
-        }
-
-        // --- 以下、ゲーム進行ロジック ---
-
-        function generateNameInputs() {
-            const count = document.getElementById('player-count').value;
-            const container = document.getElementById('name-inputs-container');
-            container.innerHTML = ""; 
-            for(let i=1; i<=count; i++) {
-                const div = document.createElement('div');
-                div.className = "name-row";
-                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
-                container.appendChild(div);
-            }
-        }
-
-        function toggleThemeSelect() {
-            const mode = document.querySelector('input[name="themeMode"]:checked').value;
-            const selectorArea = document.getElementById('theme-selector-area');
-            if(mode === 'select') {
-                selectorArea.classList.remove('hidden');
-            } else {
-                selectorArea.classList.add('hidden');
-            }
-        }
-
-        function startGame() {
-            // アクティブなテーマがあるか確認
-            const activeThemes = allThemes.filter(t => t.active);
-            if(activeThemes.length === 0) {
-                alert("有効なテーマがありません。「テーマを管理」からチェックを入れてください。");
-                return;
-            }
-
-            const count = parseInt(document.getElementById('player-count').value);
-            if(count < 2 || count > 10) { ale "戦車" },
-            { title: "子供に人気な給食のメニュー", min: "脱脂粉乳", max: "揚げパン" },
-            { title: "怖いもの", min: "あくび", max: "死・お化け" },
-            { title: "おにぎりの具の人気", min: "塩なし白米", max: "いくら" },
-            { title: "欲しい超能力・特殊能力", min: "爪が早く伸びる", max: "空を飛ぶ" },
-            { title: "カバンに入っていたら嬉しいもの", min: "ゴミ", max: "現金100万円" },
-            { title: "強そうな言葉・響き", min: "ぷよぷよ", max: "撃滅" },
-            { title: "なりたい職業", min: "ブラック企業の平社員", max: "YouTuber" },
-            { title: "無人島に持っていきたいもの", min: "砂", max: "ナイフ" },
-            { title: "恋人に求める条件", min: "呼吸をしている", max: "大富豪で優しい美形" },
-            { title: "1億円もらったらやりたいこと", min: "貯金", max: "世界一周" },
-            { title: "やめられない・とまらないこと", min: "勉強", max: "スマホを見る" },
-            { title: "言われて嬉しい褒め言葉", min: "人間だね", max: "天才" },
-            { title: "人生で大切なもの", min: "プライド", max: "家族" },
-            { title: "もらって嬉しいプレゼント", min: "石ころ", max: "最新家電" },
-            { title: "初デートで行きたい場所", min: "実家", max: "夜景の見えるレストラン" },
-            { title: "地味に痛いこと", min: "ささくれ", max: "骨折" },
-            { title: "「この人、仕事できるな」と思う瞬間", min: "挨拶ができる", max: "トラブル即解決" },
-            { title: "映画のジャンルの人気", min: "不人気", max: "大ヒット" },
-            { title: "カッコいい仕草", min: "ダサい", max: "超クール" },
-            { title: "住みたい国・場所", min: "絶対住みたくない", max: "今すぐ移住したい" }
-        ];
-
-        let allThemes = []; // デフォルト + カスタム
-        let players = []; 
-        let currentPlayerIndex = 0;
-        let currentThemeObj = null;
-
-        // 要素の取得
-        const sSetup = document.getElementById('screen-setup');
-        const sCheck = document.getElementById('screen-check');
-        const sDiscuss = document.getElementById('screen-discuss');
-        const sResult = document.getElementById('screen-result');
-
-        // 初期化処理
-        window.onload = function() {
-            generateNameInputs(); // 名前入力欄の生成
-            loadThemes();         // テーマ読み込み（ローカルストレージ含む）
-        };
-
-        // テーマの読み込みと統合
-        function loadThemes() {
-            // 1. デフォルトをコピー
-            allThemes = [...defaultThemes];
-
-            // 2. ローカルストレージからカスタムテーマを取得
-            const storedThemes = localStorage.getItem('myCustomThemes');
-            if (storedThemes) {
-                const customThemes = JSON.parse(storedThemes);
-                // 結合
-                allThemes = allThemes.concat(customThemes);
-            }
-
-            // 3. セレクトボックスを更新
-            updateThemeSelect();
-        }
-
-        // セレクトボックスの更新
-        function updateThemeSelect() {
-            const select = document.getElementById('theme-select');
-            select.innerHTML = ""; // クリア
-            
-            allThemes.forEach((t, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.text = `${t.title} (${t.min}⇔${t.max})`;
-                select.appendChild(option);
-            });
-        }
-
-        // 新規テーマ追加フォームの表示切替
-        function toggleAddForm() {
-            const form = document.getElementById('add-theme-area');
-            form.classList.toggle('hidden');
-        }
-
-        // 新規テーマの保存処理
-        function saveNewTheme() {
-            const title = document.getElementById('new-theme-title').value.trim();
-            const min = document.getElementById('new-theme-min').value.trim();
-            const max = document.getElementById('new-theme-max').value.trim();
-
-            if(!title || !min || !max) {
-                alert("すべての項目を入力してください");
-                return;
-            }
-
-            const newTheme = { title: title, min: min, max: max };
-
-            // ローカルストレージに保存
-            let customThemes = JSON.parse(localStorage.getItem('myCustomThemes') || "[]");
-            customThemes.push(newTheme);
-            localStorage.setItem('myCustomThemes', JSON.stringify(customThemes));
-
-            // 入力欄クリア
-            document.getElementById('new-theme-title').value = "";
-            document.getElementById('new-theme-min').value = "";
-            document.getElementById('new-theme-max').value = "";
-            
-            // 閉じる
-            toggleAddForm();
-
-            // リスト再読み込み
-            loadThemes();
-            
-            alert(`「${title}」を追加しました！`);
-        }
-
-        // 名前入力欄を動的に生成
-        function generateNameInputs() {
-            const count = document.getElementById('player-count').value;
-            const container = document.getElementById('name-inputs-container');
-            container.innerHTML = ""; 
-
-            for(let i=1; i<=count; i++) {
-                const div = document.createElement('div');
-                div.className = "name-row";
-                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
-                container.appendChild(div);
-            }
-        }
-
-        // モード切り替え時の表示制御
-        function toggleThemeSelect() {
-            const mode = document.querySelector('input[name="themeMode"]:checked').value;
-            const selectorArea = document.getElementById('theme-selector-area');
-            if(mode === 'select') {
-                selectorArea.classList.remove('hidden');
-            } else {
-                selectorArea.classList.add('hidden');
-            }
-        }
-
-        // ゲーム開始処理
-        function startGame() {
-            const count = parseInt(document.getElementById('player-count').value);
-            if(count < 2 || count > 10) { alert("人数は2〜10人で設定してください"); return; }
-
-            players = [];
-            let deck = [];
-            for(let i=1; i<=100; i++) deck.push(i);
-            deck = shuffle(deck);
-
-            for(let i=1; i<=count; i++) {
-                const nameInput = document.getElementById(`p-name-${i}`).value.trim();
-                const displayName = nameInput ? nameInput : `プレイヤー ${i}`;
-                players.push({ name: displayName, number: deck[i-1] });
-            }
-
-            const mode = document.querySelector('input[name="themeMode"]:checked').value;
-            if(mode === 'select') {
-                const idx = document.getElementById('theme-select').value;
-                currentThemeObj = allThemes[idx];
-            } else {
-                // ランダム (全テーマから抽選)
-                currentThemeObj = allThemes[Math.floor(Math.random() * allThemes.length)];
-            }
-
-            setThemeDisplay(currentThemeObj);
-            currentPlayerIndex = 0;
-            updateCheckScreen();
-            switchScreen(sCheck);
-        }
-
-        function setThemeDisplay(theme) {
-            document.getElementById('current-theme').innerText = theme.title;
-            document.getElementById('scale-min').innerText = theme.min;
-            document.getElementById('scale-max').innerText = theme.max;
-            document.getElementById('theme-scale').classList.remove('hidden');
-
-            document.getElementById('discuss-theme').innerText = theme.title;
-            document.getElementById('discuss-min').innerText = theme.min;
-            document.getElementById('discuss-max').innerText = theme.max;
-        }
-
-        function updateCheckScreen() {
-            const p = players[currentPlayerIndex];
-            document.getElementById('player-turn-text').innerText = `${p.name} さんの番です`;
-            document.getElementById('card-area').classList.add('hidden');
-            document.getElementById('btn-show-card').classList.remove('hidden');
-            document.getElementById('btn-next-player').classList.add('hidden');
-        }
-
-        function showCard() {
-            const myNum = players[currentPlayerIndex].number;
-            document.getElementById('my-number').innerText = myNum;
-            document.getElementById('card-area').classList.remove('hidden');
-            document.getElementById('btn-show-card').classList.add('hidden');
-            document.getElementById('btn-next-player').classList.remove('hidden');
-        }
-
-        function nextPlayer() {
-            currentPlayerIndex++;
-            if(currentPlayerIndex < players.length) {
-                updateCheckScreen();
-            } else {
-                switchScreen(sDiscuss);
-            }
-        }
-
-        function showResult() {
-            const list = document.getElementById('result-list');
-            list.innerHTML = "";
-            const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
-            sortedPlayers.forEach((p, index) => {
-                const li = document.createElement('li');
-                li.className = 'result-item';
-                li.innerHTML = `
-                    <span>
-                        <span class="result-rank">${index + 1}番目</span>
-                        ${p.name}
-                    </span>
-                    <span class="result-num">${p.number}</span>
-                `;
-                list.appendChild(li);
-            });
-            switchScreen(sResult);
-        }
-
-        function resetGame() {
-            switchScreen(sSetup);
-        }
-
-        function switchScreen(targetScreen) {
-            [sSetup, sCheck, sDiscuss, sResult].forEach(s => s.classList.add('hidden'));
-            targetScreen.classList.remove('hidden');
-        }
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-    </script>
-</body>
-</html>
-en-result');
-
-        // 初期化処理
-        window.onload = function() {
-            generateNameInputs(); // 名前入力欄の生成
-            initThemeSelect();    // テーマ選択肢の生成
-        };
-
-        // 名前入力欄を動的に生成
-        function generateNameInputs() {
-            const count = document.getElementById('player-count').value;
-            const container = document.getElementById('name-inputs-container');
-            container.innerHTML = ""; // クリア
-
-            for(let i=1; i<=count; i++) {
-                const div = document.createElement('div');
-                div.className = "name-row";
-                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
-                container.appendChild(div);
-            }
-        }
-
-        // テーマ選択肢を生成
-        function initThemeSelect() {
-            const select = document.getElementById('theme-select');
-            themesData.forEach((t, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                // セレクトボックス内では例も少し見せる
-                option.text = `${t.title} (${t.min}⇔${t.max})`;
-                select.appendChild(option);
-            });
-        }
-
-        // モード切り替え時の表示制御
-        function toggleThemeSelect() {
-            const mode = document.querySelector('input[name="themeMode"]:checked').value;
-            const selectorArea = document.getElementById('theme-selector-area');
-            if(mode === 'select') {
-                selectorArea.classList.remove('hidden');
-            } else {
-                selectorArea.classList.add('hidden');
-            }
-        }
-
-        // ゲーム開始処理
-        function startGame() {
-            const count = parseInt(document.getElementById('player-count').value);
-            if(count < 2 || count > 10) { alert("人数は2〜10人で設定してください"); return; }
-
-            // プレイヤー情報の構築
-            players = [];
-            
-            // デッキ生成（1-100）
-            let deck = [];
-            for(let i=1; i<=100; i++) deck.push(i);
-            deck = shuffle(deck);
-
-            for(let i=1; i<=count; i++) {
-                const nameInput = document.getElementById(`p-name-${i}`).value.trim();
-                const displayName = nameInput ? nameInput : `プレイヤー ${i}`;
-                players.push({ name: displayName, number: deck[i-1] });
-            }
-
-            // お題の決定
-            const mode = document.querySelector('input[name="themeMode"]:checked').value;
-            if(mode === 'select') {
-                const idx = document.getElementById('theme-select').value;
-                currentThemeObj = themesData[idx];
-            } else {
-                // ランダム
-                currentThemeObj = themesData[Math.floor(Math.random() * themesData.length)];
-            }
-
-            // お題表示の更新
-            setThemeDisplay(currentThemeObj);
-
-            // 状態リセット
-            currentPlayerIndex = 0;
-            updateCheckScreen();
-
-            // 画面切り替え
-            switchScreen(sCheck);
-        }
-
-        // お題表示の更新関数
-        function setThemeDisplay(theme) {
-            // チェック画面
-            document.getElementById('current-theme').innerText = theme.title;
-            document.getElementById('scale-min').innerText = theme.min;
-            document.getElementById('scale-max').innerText = theme.max;
-            document.getElementById('theme-scale').classList.remove('hidden');
-
-            // 会話画面
-            document.getElementById('discuss-theme').innerText = theme.title;
-            document.getElementById('discuss-min').innerText = theme.min;
-            document.getElementById('discuss-max').innerText = theme.max;
-        }
-
-        // プレイヤー確認画面の更新
-        function updateCheckScreen() {
-            const p = players[currentPlayerIndex];
-            document.getElementById('player-turn-text').innerText = `${p.name} さんの番です`;
-            
-            document.getElementById('card-area').classList.add('hidden');
-            document.getElementById('btn-show-card').classList.remove('hidden');
-            document.getElementById('btn-next-player').classList.add('hidden');
-        }
-
-        // 数字を表示する
-        function showCard() {
-            const myNum = players[currentPlayerIndex].number;
-            document.getElementById('my-number').innerText = myNum;
-            
-            document.getElementById('card-area').classList.remove('hidden');
-            document.getElementById('btn-show-card').classList.add('hidden');
-            document.getElementById('btn-next-player').classList.remove('hidden');
-        }
-
-        // 次のプレイヤーへ
-        function nextPlayer() {
-            currentPlayerIndex++;
-            if(currentPlayerIndex < players.length) {
-                updateCheckScreen();
-            } else {
-                switchScreen(sDiscuss);
-            }
-        }
-
-        // 結果発表
-        function showResult() {
-            const list = document.getElementById('result-list');
-            list.innerHTML = "";
-            
-            const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
-
-            sortedPlayers.forEach((p, index) => {
-                const li = document.createElement('li');
-                li.className = 'result-item';
-                li.innerHTML = `
-                    <span>
-                        <span class="result-rank">${index + 1}番目</span>
-                        ${p.name}
-                    </span>
-                    <span class="result-num">${p.number}</span>
-                `;
-                list.appendChild(li);
-            });
-
-            switchScreen(sResult);
-        }
-
-        function resetGame() {
-            switchScreen(sSetup);
-        }
-
-        function switchScreen(targetScreen) {
-            [sSetup, sCheck, sDiscuss, sResult].forEach(s => s.classList.add('hidden'));
-            targetScreen.classList.remove('hidden');
-        }
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-    </script>
-</body>
-</html>
+    <div id="screen-check" class="container hidden">
+        <div class="theme-box">
+            <div class="theme-title">今回のお題</div>
+            <div id="current-theme" class="theme-text">---</div>
+            <div id="theme-scale" class="theme-example hidden">
+                <div class="ex-item
