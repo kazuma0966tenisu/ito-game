@@ -39,6 +39,23 @@
             transition: background 0.2s;
         }
         .btn:active { background-color: #b71c1c; }
+        
+        /* 補助ボタン（枠線のみ） */
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #d32f2f;
+            color: #d32f2f;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            margin-top: 10px;
+            width: auto;
+        }
+
         .hidden { display: none; }
         
         /* カードスタイル */
@@ -83,7 +100,7 @@
 
         /* 入力エリア */
         .input-group { margin: 15px 0; text-align: left; }
-        .input-group label { font-weight: bold; display: block; margin-bottom: 5px; }
+        .input-group label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px;}
         input[type="number"], input[type="text"], select {
             padding: 10px;
             font-size: 16px;
@@ -94,7 +111,6 @@
             margin-bottom: 10px;
         }
         
-        /* 名前入力リスト */
         #name-inputs-container {
             max-height: 200px;
             overflow-y: auto;
@@ -109,7 +125,7 @@
         .mode-select {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .mode-label {
             flex: 1;
@@ -127,6 +143,19 @@
             font-weight: bold;
         }
         input[type="radio"] { display: none; }
+
+        /* 新規追加フォーム */
+        .add-theme-form {
+            background: #fff;
+            border: 2px solid #d32f2f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            text-align: left;
+        }
+        .add-theme-header {
+            font-weight: bold; color: #d32f2f; margin-bottom: 10px;
+        }
 
         /* 結果リスト */
         .result-list {
@@ -181,6 +210,28 @@
             
             <div id="theme-selector-area" class="hidden">
                 <select id="theme-select"></select>
+            </div>
+
+            <div style="text-align: right;">
+                <button class="btn btn-outline btn-small" onclick="toggleAddForm()">＋ テーマを新しく追加</button>
+            </div>
+
+            <div id="add-theme-area" class="add-theme-form hidden">
+                <div class="add-theme-header">新しいテーマを追加</div>
+                
+                <label>テーマ名</label>
+                <input type="text" id="new-theme-title" placeholder="例：おふくろの味">
+                
+                <label>1 (最小) の例</label>
+                <input type="text" id="new-theme-min" placeholder="例：ただのゆで卵">
+                
+                <label>100 (最大) の例</label>
+                <input type="text" id="new-theme-max" placeholder="例：特製肉じゃが">
+
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-small" style="background:#888;" onclick="toggleAddForm()">キャンセル</button>
+                    <button class="btn btn-small" onclick="saveNewTheme()">追加する</button>
+                </div>
             </div>
         </div>
 
@@ -237,9 +288,8 @@
     </div>
 
     <script>
-        // お題リスト（オブジェクト形式に変更）
-        // 1と100の例があるものは min, max に設定
-        const themesData = [
+        // デフォルトのお題リスト（変更なし）
+        const defaultThemes = [
             { title: "生き物の強さ", min: "アリ", max: "ライオン" },
             { title: "コンビニ商品の人気", min: "水", max: "からあげクン" },
             { title: "ゾンビと戦う時の武器", min: "素手", max: "戦車" },
@@ -260,13 +310,13 @@
             { title: "初デートで行きたい場所", min: "実家", max: "夜景の見えるレストラン" },
             { title: "地味に痛いこと", min: "ささくれ", max: "骨折" },
             { title: "「この人、仕事できるな」と思う瞬間", min: "挨拶ができる", max: "トラブル即解決" },
-            // 旧リストの一部も形式を合わせて維持
             { title: "映画のジャンルの人気", min: "不人気", max: "大ヒット" },
             { title: "カッコいい仕草", min: "ダサい", max: "超クール" },
             { title: "住みたい国・場所", min: "絶対住みたくない", max: "今すぐ移住したい" }
         ];
 
-        let players = []; // { name: "Aさん", number: 45 }
+        let allThemes = []; // デフォルト + カスタム
+        let players = []; 
         let currentPlayerIndex = 0;
         let currentThemeObj = null;
 
@@ -275,6 +325,212 @@
         const sCheck = document.getElementById('screen-check');
         const sDiscuss = document.getElementById('screen-discuss');
         const sResult = document.getElementById('screen-result');
+
+        // 初期化処理
+        window.onload = function() {
+            generateNameInputs(); // 名前入力欄の生成
+            loadThemes();         // テーマ読み込み（ローカルストレージ含む）
+        };
+
+        // テーマの読み込みと統合
+        function loadThemes() {
+            // 1. デフォルトをコピー
+            allThemes = [...defaultThemes];
+
+            // 2. ローカルストレージからカスタムテーマを取得
+            const storedThemes = localStorage.getItem('myCustomThemes');
+            if (storedThemes) {
+                const customThemes = JSON.parse(storedThemes);
+                // 結合
+                allThemes = allThemes.concat(customThemes);
+            }
+
+            // 3. セレクトボックスを更新
+            updateThemeSelect();
+        }
+
+        // セレクトボックスの更新
+        function updateThemeSelect() {
+            const select = document.getElementById('theme-select');
+            select.innerHTML = ""; // クリア
+            
+            allThemes.forEach((t, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.text = `${t.title} (${t.min}⇔${t.max})`;
+                select.appendChild(option);
+            });
+        }
+
+        // 新規テーマ追加フォームの表示切替
+        function toggleAddForm() {
+            const form = document.getElementById('add-theme-area');
+            form.classList.toggle('hidden');
+        }
+
+        // 新規テーマの保存処理
+        function saveNewTheme() {
+            const title = document.getElementById('new-theme-title').value.trim();
+            const min = document.getElementById('new-theme-min').value.trim();
+            const max = document.getElementById('new-theme-max').value.trim();
+
+            if(!title || !min || !max) {
+                alert("すべての項目を入力してください");
+                return;
+            }
+
+            const newTheme = { title: title, min: min, max: max };
+
+            // ローカルストレージに保存
+            let customThemes = JSON.parse(localStorage.getItem('myCustomThemes') || "[]");
+            customThemes.push(newTheme);
+            localStorage.setItem('myCustomThemes', JSON.stringify(customThemes));
+
+            // 入力欄クリア
+            document.getElementById('new-theme-title').value = "";
+            document.getElementById('new-theme-min').value = "";
+            document.getElementById('new-theme-max').value = "";
+            
+            // 閉じる
+            toggleAddForm();
+
+            // リスト再読み込み
+            loadThemes();
+            
+            alert(`「${title}」を追加しました！`);
+        }
+
+        // 名前入力欄を動的に生成
+        function generateNameInputs() {
+            const count = document.getElementById('player-count').value;
+            const container = document.getElementById('name-inputs-container');
+            container.innerHTML = ""; 
+
+            for(let i=1; i<=count; i++) {
+                const div = document.createElement('div');
+                div.className = "name-row";
+                div.innerHTML = `<input type="text" id="p-name-${i}" placeholder="プレイヤー ${i} の名前">`;
+                container.appendChild(div);
+            }
+        }
+
+        // モード切り替え時の表示制御
+        function toggleThemeSelect() {
+            const mode = document.querySelector('input[name="themeMode"]:checked').value;
+            const selectorArea = document.getElementById('theme-selector-area');
+            if(mode === 'select') {
+                selectorArea.classList.remove('hidden');
+            } else {
+                selectorArea.classList.add('hidden');
+            }
+        }
+
+        // ゲーム開始処理
+        function startGame() {
+            const count = parseInt(document.getElementById('player-count').value);
+            if(count < 2 || count > 10) { alert("人数は2〜10人で設定してください"); return; }
+
+            players = [];
+            let deck = [];
+            for(let i=1; i<=100; i++) deck.push(i);
+            deck = shuffle(deck);
+
+            for(let i=1; i<=count; i++) {
+                const nameInput = document.getElementById(`p-name-${i}`).value.trim();
+                const displayName = nameInput ? nameInput : `プレイヤー ${i}`;
+                players.push({ name: displayName, number: deck[i-1] });
+            }
+
+            const mode = document.querySelector('input[name="themeMode"]:checked').value;
+            if(mode === 'select') {
+                const idx = document.getElementById('theme-select').value;
+                currentThemeObj = allThemes[idx];
+            } else {
+                // ランダム (全テーマから抽選)
+                currentThemeObj = allThemes[Math.floor(Math.random() * allThemes.length)];
+            }
+
+            setThemeDisplay(currentThemeObj);
+            currentPlayerIndex = 0;
+            updateCheckScreen();
+            switchScreen(sCheck);
+        }
+
+        function setThemeDisplay(theme) {
+            document.getElementById('current-theme').innerText = theme.title;
+            document.getElementById('scale-min').innerText = theme.min;
+            document.getElementById('scale-max').innerText = theme.max;
+            document.getElementById('theme-scale').classList.remove('hidden');
+
+            document.getElementById('discuss-theme').innerText = theme.title;
+            document.getElementById('discuss-min').innerText = theme.min;
+            document.getElementById('discuss-max').innerText = theme.max;
+        }
+
+        function updateCheckScreen() {
+            const p = players[currentPlayerIndex];
+            document.getElementById('player-turn-text').innerText = `${p.name} さんの番です`;
+            document.getElementById('card-area').classList.add('hidden');
+            document.getElementById('btn-show-card').classList.remove('hidden');
+            document.getElementById('btn-next-player').classList.add('hidden');
+        }
+
+        function showCard() {
+            const myNum = players[currentPlayerIndex].number;
+            document.getElementById('my-number').innerText = myNum;
+            document.getElementById('card-area').classList.remove('hidden');
+            document.getElementById('btn-show-card').classList.add('hidden');
+            document.getElementById('btn-next-player').classList.remove('hidden');
+        }
+
+        function nextPlayer() {
+            currentPlayerIndex++;
+            if(currentPlayerIndex < players.length) {
+                updateCheckScreen();
+            } else {
+                switchScreen(sDiscuss);
+            }
+        }
+
+        function showResult() {
+            const list = document.getElementById('result-list');
+            list.innerHTML = "";
+            const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
+            sortedPlayers.forEach((p, index) => {
+                const li = document.createElement('li');
+                li.className = 'result-item';
+                li.innerHTML = `
+                    <span>
+                        <span class="result-rank">${index + 1}番目</span>
+                        ${p.name}
+                    </span>
+                    <span class="result-num">${p.number}</span>
+                `;
+                list.appendChild(li);
+            });
+            switchScreen(sResult);
+        }
+
+        function resetGame() {
+            switchScreen(sSetup);
+        }
+
+        function switchScreen(targetScreen) {
+            [sSetup, sCheck, sDiscuss, sResult].forEach(s => s.classList.add('hidden'));
+            targetScreen.classList.remove('hidden');
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
+en-result');
 
         // 初期化処理
         window.onload = function() {
