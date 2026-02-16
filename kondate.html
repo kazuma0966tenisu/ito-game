@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ラクうま献立マネージャー</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --accent-color: #FFC107;
+            --background-color: #F5F5F5;
+            --surface-color: #FFFFFF;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px;
+            box-shadow: var(--shadow-1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-1);
+            padding: 20px;
+            margin-bottom: 24px;
+            transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-2);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            margin-top: 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #E8F5E9;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Input Section */
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        button.btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: var(--shadow-1);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button.btn-primary:active {
+            background-color: var(--primary-dark);
+            transform: translateY(1px);
+        }
+
+        button.btn-block {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* Chips for Inventory */
+        .chip-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .chip {
+            background-color: #E8F5E9;
+            color: var(--primary-dark);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip i {
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        
+        .chip i:hover {
+            opacity: 1;
+        }
+
+        /* Menu List */
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            border-bottom: 1px solid #eee;
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-day {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .menu-main {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-rice {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .used-inventory {
+            font-size: 0.75rem;
+            color: #d32f2f; /* Red for alert/notice */
+            background-color: #ffebee;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+
+        /* Shopping List */
+        .shopping-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .shopping-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .shopping-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+
+        .shopping-item label {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+
+        .shopping-item input:checked + label {
+            text-decoration: line-through;
+            color: #ccc;
+        }
+
+        /* Helper Classes */
+        .hidden { display: none; }
+        .text-center { text-align: center; }
+        .empty-state { color: #999; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><span class="material-icons">restaurant_menu</span> 1週間献立＆お買い物</h1>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2><span class="material-icons">kitchen</span> STEP 1: 冷蔵庫の在庫</h2>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">今ある食材を入力してください（例：豚肉、キャベツ、卵）。優先的に消費するメニューを提案します。</p>
+        
+        <div class="input-group">
+            <input type="text" id="inventoryInput" placeholder="食材を入力..." onkeypress="handleKeyPress(event)">
+            <button class="btn-primary" onclick="addInventory()">追加</button>
+        </div>
+
+        <div class="chip-container" id="inventoryChips">
+            </div>
+    </div>
+
+    <div class="text-center" style="margin-bottom: 24px;">
+        <button class="btn-primary btn-block" onclick="generateMenu()">
+            <span class="material-icons" style="margin-right:8px;">auto_awesome</span> 献立とお買い物リストを作成
+        </button>
+    </div>
+
+    <div class="card hidden" id="menuCard">
+        <h2><span class="material-icons">calendar_today</span> STEP 2: 今週の献立</h2>
+        <ul class="menu-list" id="menuList">
+            </ul>
+    </div>
+
+    <div class="card hidden" id="shoppingCard">
+        <h2><span class="material-icons">shopping_cart</span> STEP 3: お買い物リスト</h2>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">在庫にない必要な食材です。</p>
+        <ul class="shopping-list" id="shoppingList">
+            </ul>
+    </div>
+
+</div>
+
+<script>
+    // --- Data: Recipe Database (Main Dishes suitable for couples) ---
+    // Ingredients are simplified for matching.
+    const recipeDB = [
+        { name: "豚肉の生姜焼き", ingredients: ["豚肉", "玉ねぎ", "生姜"] },
+        { name: "肉じゃが", ingredients: ["豚肉", "じゃがいも", "人参", "玉ねぎ"] },
+        { name: "鶏の照り焼き", ingredients: ["鶏肉", "キャベツ"] },
+        { name: "サバの味噌煮", ingredients: ["サバ", "生姜", "ネギ"] },
+        { name: "ハンバーグ", ingredients: ["合い挽き肉", "玉ねぎ", "卵", "パン粉"] },
+        { name: "麻婆豆腐", ingredients: ["豚ひき肉", "豆腐", "ネギ"] },
+        { name: "野菜炒め", ingredients: ["豚肉", "キャベツ", "人参", "ピーマン", "もやし"] },
+        { name: "カレーライス", ingredients: ["豚肉", "じゃがいも", "人参", "玉ねぎ"] },
+        { name: "鮭のムニエル", ingredients: ["鮭", "ほうれん草"] },
+        { name: "オムライス", ingredients: ["鶏肉", "卵", "玉ねぎ"] },
+        { name: "豚キムチ", ingredients: ["豚肉", "キムチ", "ニラ"] },
+        { name: "筑前煮", ingredients: ["鶏肉", "人参", "ごぼう", "レンコン"] },
+        { name: "親子丼", ingredients: ["鶏肉", "卵", "玉ねぎ"] },
+        { name: "ホイコーロー", ingredients: ["豚肉", "キャベツ", "ピーマン"] },
+        { name: "唐揚げ", ingredients: ["鶏肉", "レタス"] },
+        { name: "ブリの照り焼き", ingredients: ["ブリ", "大根"] },
+        { name: "八宝菜", ingredients: ["豚肉", "白菜", "人参", "キクラゲ", "エビ"] },
+        { name: "ミートソースパスタ", ingredients: ["合い挽き肉", "玉ねぎ", "トマト缶"] }, // Note: Main implies pasta, but base rule is Rice. Let's stick to items that go with rice or can be accepted.
+        { name: "ロールキャベツ", ingredients: ["合い挽き肉", "キャベツ", "玉ねぎ"] },
+        { name: "鶏肉のトマト煮", ingredients: ["鶏肉", "トマト缶", "玉ねぎ", "きのこ"] }
+    ];
+
+    // --- State ---
+    let myInventory = [];
+    let currentMenu = [];
+
+    // --- Functions: Inventory Management ---
+    
+    function addInventory() {
+        const input = document.getElementById('inventoryInput');
+        const value = input.value.trim();
+
+        if (value && !myInventory.includes(value)) {
+            myInventory.push(value);
+            renderChips();
+            input.value = '';
+        }
+    }
+
+    function removeInventory(index) {
+        myInventory.splice(index, 1);
+        renderChips();
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            addInventory();
+        }
+    }
+
+    function renderChips() {
+        const container = document.getElementById('inventoryChips');
+        container.innerHTML = '';
+        
+        myInventory.forEach((item, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.innerHTML = `${item} <i class="material-icons" onclick="removeInventory(${index})">close</i>`;
+            container.appendChild(chip);
+        });
+    }
+
+    // --- Functions: Menu Generation Logic ---
+
+    function generateMenu() {
+        // 1. Score recipes based on inventory match
+        let scoredRecipes = recipeDB.map(recipe => {
+            const matches = recipe.ingredients.filter(ing => myInventory.some(inv => ing.includes(inv) || inv.includes(ing)));
+            return {
+                ...recipe,
+                score: matches.length,
+                matchedIngredients: matches
+            };
+        });
+
+        // 2. Sort: High score first, then random shuffle for variety among same scores
+        scoredRecipes.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return 0.5 - Math.random();
+        });
+
+        // 3. Pick top 7 unique recipes
+        // Simple distinct check to avoid same recipe twice (though DB is unique, logic might expand)
+        currentMenu = scoredRecipes.slice(0, 7);
+
+        // 4. Render Menu
+        renderMenu();
+
+        // 5. Generate Shopping List
+        generateShoppingList();
+
+        // Show sections
+        document.getElementById('menuCard').classList.remove('hidden');
+        document.getElementById('shoppingCard').classList.remove('hidden');
+        
+        // Scroll to menu
+        document.getElementById('menuCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderMenu() {
+        const list = document.getElementById('menuList');
+        list.innerHTML = '';
+        const days = ['月', '火', '水', '木', '金', '土', '日'];
+
+        currentMenu.forEach((recipe, index) => {
+            const li = document.createElement('li');
+            li.className = 'menu-item';
+            
+            // Usage badge
+            let badgeHtml = '';
+            if (recipe.score > 0) {
+                badgeHtml = `<span class="used-inventory">在庫活用: ${recipe.matchedIngredients.join(', ')}</span>`;
+            }
+
+            li.innerHTML = `
+                <div class="menu-day">${index + 1}日目 (${days[index % 7]})</div>
+                <div class="menu-main">
+                    ${recipe.name}
+                    ${badgeHtml}
+                </div>
+                <div class="menu-rice">
+                    <span class="material-icons" style="font-size:14px;">rice_bowl</span> 白ごはん
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    // --- Functions: Shopping List Logic ---
+
+    function generateShoppingList() {
+        const list = document.getElementById('shoppingList');
+        list.innerHTML = '';
+
+        let allIngredients = [];
+
+        // Collect all needed ingredients
+        currentMenu.forEach(recipe => {
+            recipe.ingredients.forEach(ing => {
+                allIngredients.push(ing);
+            });
+        });
+
+        // Unique set
+        let uniqueIngredients = [...new Set(allIngredients)];
+
+        // Filter out what we have in inventory
+        // Using loose matching (if inventory has "Cabbage", remove "Cabbage" from list)
+        let toBuy = uniqueIngredients.filter(needed => {
+            // If any inventory item matches the needed item (partially or fully), we have it.
+            // e.g. Needed: "Pork", Inventory: "Sliced Pork" -> Match.
+            // e.g. Needed: "Onion", Inventory: "Onion" -> Match.
+            const hasItem = myInventory.some(inv => inv.includes(needed) || needed.includes(inv));
+            return !hasItem;
+        });
+
+        if (toBuy.length === 0) {
+            list.innerHTML = '<li class="empty-state">買い足すものはありません！素晴らしい！</li>';
+            return;
+        }
+
+        toBuy.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'shopping-item';
+            const id = `shop-${item}`;
+            li.innerHTML = `
+                <input type="checkbox" id="${id}">
+                <label for="${id}">${item}</label>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    // Initialize with some dummy data hint if needed, or leave clean.
+</script>
+
+</body>
+</html>
